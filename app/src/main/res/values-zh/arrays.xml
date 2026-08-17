@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="search_mode_entries">
+        <item>@string/mode_strict</item>
+        <item>@string/mode_medium</item>
+        <item>@string/mode_loose</item>
+    </string-array>
+    <string-array name="search_mode_values">
+        <item>strict</item>
+        <item>medium</item>
+        <item>loose</item>
+    </string-array>
+
+    <string-array name="file_type_entries">
+        <item>@string/ft_txt</item>
+        <item>@string/ft_md</item>
+        <item>@string/ft_csv</item>
+        <item>@string/ft_pdf</item>
+        <item>@string/ft_xlsx</item>
+    </string-array>
+    <string-array name="file_type_values">
+        <item>txt</item>
+        <item>md</item>
+        <item>csv</item>
+        <item>pdf</item>
+        <item>xls</item>
+    </string-array>
+
+    <string-array name="char_limit_entries">
+        <item>@string/limit_200k</item>
+        <item>@string/limit_500k</item>
+        <item>@string/limit_1m</item>
+        <item>@string/limit_5m</item>
+        <item>@string/limit_unlimited</item>
+    </string-array>
+    <string-array name="char_limit_values">
+        <item>200000</item>
+        <item>500000</item>
+        <item>1000000</item>
+        <item>5000000</item>
+        <item>0</item>
+    </string-array>
+</resources>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">N Search</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_scan_history">Scan History</string>
+
+    <!-- search -->
+    <string name="search_hint">Search local files (full text)…</string>
+    <string name="search_mode_label">Match:</string>
+    <string name="advanced_search">Advanced search</string>
+    <string name="adv_match">Match precision</string>
+    <string name="adv_done">Done</string>
+    <string name="empty_results">No matching results</string>
+    <string name="found_results">Found %1$d results</string>
+    <string name="empty_hint">Type a keyword to search. Build the index first to search file contents.</string>
+    <string name="open_file">Open file</string>
+
+    <!-- index / progress -->
+    <string name="btn_index_now">Index now</string>
+    <string name="btn_pause">Pause</string>
+    <string name="btn_resume">Resume</string>
+    <string name="indexing_progress">Indexing</string>
+    <string name="idle">Idle</string>
+    <string name="index_stats">Indexed %1$d / %2$d files</string>
+    <string name="indexing_current">Indexing: %1$s</string>
+    <string name="index_done">Index complete: %1$d files in %2$s</string>
+    <string name="index_cancelled">Index stopped</string>
+    <string name="indexing_notification_title">Indexing files…</string>
+    <string name="indexing_notification_text">%1$d / %2$d · %3$s</string>
+
+    <!-- permission -->
+    <string name="no_permission">Storage permission is required to scan files. Please grant it in Settings.</string>
+    <string name="grant_permission">Grant</string>
+    <string name="go_settings">Go to Settings</string>
+
+    <!-- settings -->
+    <string name="settings_default_mode">Default search mode</string>
+    <string name="mode_strict">Strict (all words)</string>
+    <string name="mode_medium">Medium</string>
+    <string name="mode_loose">Loose (any word)</string>
+    <string name="settings_synonym">Synonym expansion</string>
+    <string name="settings_synonym_summary">Automatically expand near-synonyms when searching</string>
+    <string name="settings_file_types">Indexed file types</string>
+    <string name="ft_txt">Text (txt)</string>
+    <string name="ft_md">Markdown (md)</string>
+    <string name="ft_csv">CSV (csv)</string>
+    <string name="ft_pdf">PDF (pdf)</string>
+    <string name="ft_xlsx">Excel (xls/xlsx)</string>
+    <string name="ft_doc">Word (doc/docx)</string>
+    <string name="ft_ppt">PowerPoint (ppt/pptx)</string>
+
+    <!-- result card type labels (short) -->
+    <string name="type_txt">Text</string>
+    <string name="type_md">Markdown</string>
+    <string name="type_csv">CSV</string>
+    <string name="type_pdf">PDF</string>
+    <string name="type_xlsx">Excel</string>
+    <string name="type_doc">Word</string>
+    <string name="type_ppt">PowerPoint</string>
+    <string name="type_file">File</string>
+    <string name="settings_char_limit">Per-file index size limit</string>
+    <string name="limit_200k">200K</string>
+    <string name="limit_500k">500K</string>
+    <string name="limit_1m">1M (default)</string>
+    <string name="limit_5m">5M</string>
+    <string name="limit_unlimited">Unlimited</string>
+    <string name="settings_scope">Index scope</string>
+    <string name="add_folder">Add folder</string>
+    <string name="settings_index_ops">Index operations</string>
+    <string name="trigger_index">Trigger index</string>
+    <string name="delete_index">Delete index</string>
+    <string name="delete_index_confirm">Delete the entire index? This cannot be undone.</string>
+    <string name="scan_history">Scan history</string>
+    <string name="clear_history">Clear history</string>
+    <string name="empty_history">No scan records yet</string>
+    <string name="last_indexed">Last indexed: %1$s</string>
+    <string name="files_total">%1$d files total</string>
+    <string name="about">About</string>
+    <string name="version">Version %1$s</string>
+    <string name="index_progress_title">File indexing progress</string>
+
+    <!-- history item -->
+    <string name="history_ok">OK</string>
+    <string name="history_failed">failed</string>
+    <string name="history_skipped">skipped</string>
+    <string name="history_duration">took %1$s</string>
+
+    <!-- misc -->
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="confirm">Confirm</string>
+    <string name="snippet_unavailable">No preview available.</string>
+    <string name="indexing_in_progress">Indexing is in progress…</string>
+</resources>

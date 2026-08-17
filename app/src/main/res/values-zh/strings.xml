@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">N搜索</string>
+    <string name="title_settings">设置</string>
+    <string name="title_scan_history">扫描历史</string>
+
+    <!-- search -->
+    <string name="search_hint">搜索本地文件（全文）…</string>
+    <string name="search_mode_label">匹配：</string>
+    <string name="advanced_search">高级搜索</string>
+    <string name="adv_match">匹配精度</string>
+    <string name="adv_done">完成</string>
+    <string name="empty_results">没有匹配结果</string>
+    <string name="found_results">找到 %1$d 条结果</string>
+    <string name="empty_hint">输入关键词开始搜索；先建立索引才能搜到文件内容。</string>
+    <string name="open_file">打开文件</string>
+
+    <!-- index / progress -->
+    <string name="btn_index_now">立即索引</string>
+    <string name="btn_pause">暂停</string>
+    <string name="btn_resume">继续</string>
+    <string name="indexing_progress">索引中</string>
+    <string name="idle">空闲</string>
+    <string name="index_stats">已索引 %1$d / %2$d 个文件</string>
+    <string name="indexing_current">正在索引：%1$s</string>
+    <string name="index_done">索引完成：%1$d 个文件，用时 %2$s</string>
+    <string name="index_cancelled">索引已停止</string>
+    <string name="indexing_notification_title">正在索引文件…</string>
+    <string name="indexing_notification_text">%1$d / %2$d · %3$s</string>
+
+    <!-- permission -->
+    <string name="no_permission">扫描文件需要存储权限，请在设置中授予。</string>
+    <string name="grant_permission">授予</string>
+    <string name="go_settings">去设置</string>
+
+    <!-- settings -->
+    <string name="settings_default_mode">默认搜索模式</string>
+    <string name="mode_strict">严格（包含所有词）</string>
+    <string name="mode_medium">中等</string>
+    <string name="mode_loose">宽松（包含任一词）</string>
+    <string name="settings_synonym">同义词扩展</string>
+    <string name="settings_synonym_summary">搜索时自动扩展近义词</string>
+    <string name="settings_file_types">索引文件类型</string>
+    <string name="ft_txt">文本 (txt)</string>
+    <string name="ft_md">Markdown (md)</string>
+    <string name="ft_csv">表格 (csv)</string>
+    <string name="ft_pdf">PDF (pdf)</string>
+    <string name="ft_xlsx">Excel (xls/xlsx)</string>
+    <string name="ft_doc">Word (doc/docx)</string>
+    <string name="ft_ppt">PowerPoint (ppt/pptx)</string>
+
+    <!-- result card type labels (short) -->
+    <string name="type_txt">文本</string>
+    <string name="type_md">Markdown</string>
+    <string name="type_csv">表格</string>
+    <string name="type_pdf">PDF</string>
+    <string name="type_xlsx">Excel</string>
+    <string name="type_doc">Word</string>
+    <string name="type_ppt">PowerPoint</string>
+    <string name="type_file">文件</string>
+
+    <string name="settings_char_limit">单文件索引字数上限</string>
+    <string name="limit_200k">200K</string>
+    <string name="limit_500k">500K</string>
+    <string name="limit_1m">1M（默认）</string>
+    <string name="limit_5m">5M</string>
+    <string name="limit_unlimited">无限制</string>
+    <string name="settings_scope">索引范围</string>
+    <string name="add_folder">添加文件夹</string>
+    <string name="settings_index_ops">索引操作</string>
+    <string name="trigger_index">触发索引</string>
+    <string name="delete_index">删除索引</string>
+    <string name="delete_index_confirm">确定删除全部索引？此操作不可撤销。</string>
+    <string name="scan_history">扫描历史</string>
+    <string name="clear_history">清空历史</string>
+    <string name="empty_history">暂无扫描记录</string>
+    <string name="last_indexed">上次索引：%1$s</string>
+    <string name="files_total">文件总数 %1$d</string>
+    <string name="about">关于</string>
+    <string name="version">版本 %1$s</string>
+    <string name="index_progress_title">文件索引进度</string>
+
+    <!-- history item -->
+    <string name="history_ok">成功</string>
+    <string name="history_failed">失败</string>
+    <string name="history_skipped">跳过</string>
+    <string name="history_duration">用时 %1$s</string>
+
+    <!-- misc -->
+    <string name="cancel">取消</string>
+    <string name="ok">确定</string>
+    <string name="confirm">确认</string>
+    <string name="snippet_unavailable">暂无预览。</string>
+    <string name="indexing_in_progress">索引进行中…</string>
+</resources>
