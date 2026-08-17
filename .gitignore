@@ -16,16 +16,18 @@ captures/
 # Local configuration (SDK path, etc.)
 local.properties
 
-# Signing keys — never commit keystores / key material
-*.keystore
+# Signing keys — never commit keystores / key material (keep shared debug keystore for reproducible builds)
 *.jks
-signing/
+*.keystore
+!signing/debug.keystore
 
 # IDE / editor
 .idea/
 *.iml
-gradle
-.gradle
+# Gradle (ignore local Gradle cache only; wrapper is committed for reproducible builds)
+.gradle/
+# Re-include the committed Gradle wrapper jar (overrides *.jar above)
+!gradle/wrapper/gradle-wrapper.jar
 .vscode/
 .DS_Store
 
