@@ -1,0 +1,31 @@
+# nSearch 同义词词典（SolrSynonymParser 格式）
+# 每行用逗号分隔的近义词；不含 "=>" 时表示这些词互为同义（搜索任一词会扩展为全部）。
+fast, quick, rapid, swift
+big, large, huge, giant
+small, little, tiny, minor
+car, automobile, vehicle
+phone, mobile, cellphone, smartphone
+computer, pc, laptop
+search, find, query, lookup
+file, document, doc
+text, txt, plain
+book, novel, publication
+image, picture, photo
+video, movie, clip
+audio, sound, music
+email, mail, e-mail
+password, pwd, passcode
+account, user, login
+config, configuration, setting
+error, bug, failure, exception
+memory, ram, storage
+network, internet, wifi
+install, setup, deploy
+update, upgrade, refresh
+delete, remove, erase
+create, make, new
+open, launch, start
+close, exit, quit
+write, save, store
+read, load, view
+help, guide, manual, doc
