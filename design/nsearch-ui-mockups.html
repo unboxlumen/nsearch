@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>nSearch · 前端设计图 (UI Mockups)</title>
+<style>
+  :root{
+    --brand:#007DFF; --brand-dark:#0A5BD6;
+    --text:#121212; --text-2:#5F6368;
+    --bg:#FFFFFF; --surface:#FFFFFF; --outline:#E5E5E5;
+    --highlight:#FFF3C4;
+    --radius:14px;
+    --frame-w:340px; --frame-h:740px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#F5F6F8; color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Helvetica Neue",Arial,sans-serif;
+    line-height:1.5;
+  }
+  header.page{
+    background:linear-gradient(135deg,var(--brand),var(--brand-dark));
+    color:#fff; padding:28px 24px 22px;
+  }
+  header.page h1{margin:0 0 4px; font-size:24px; display:flex; align-items:center; gap:12px;}
+  header.page .sub{opacity:.9; font-size:14px;}
+  .wrap{max-width:1180px; margin:0 auto; padding:24px;}
+  section{margin:0 0 34px;}
+  h2{font-size:18px; border-left:4px solid var(--brand); padding-left:10px; margin:0 0 16px;}
+  h3{font-size:14px; color:var(--text-2); margin:18px 0 8px; text-transform:uppercase; letter-spacing:.5px;}
+  p.note{color:var(--text-2); font-size:14px; max-width:820px;}
+
+  /* phone frame */
+  .phones{display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start;}
+  .phone{
+    width:var(--frame-w); background:var(--bg); border:1px solid var(--outline);
+    border-radius:26px; padding:10px; box-shadow:0 8px 24px rgba(0,0,0,.08);
+    flex:0 0 auto;
+  }
+  .phone .screen{
+    width:100%; height:var(--frame-h); background:var(--surface);
+    border-radius:18px; overflow:hidden; display:flex; flex-direction:column;
+    border:1px solid var(--outline);
+  }
+  .phone .cap{text-align:center; font-size:13px; color:var(--text-2); margin-top:8px; font-weight:600;}
+
+  /* app bar */
+  .appbar{
+    height:56px; display:flex; align-items:center; padding:0 8px;
+    border-bottom:1px solid var(--outline); background:#fff;
+  }
+  .appbar .title{font-weight:600; font-size:17px; flex:1; padding-left:6px;}
+  .appbar .act{width:40px; height:40px; display:grid; place-items:center; border-radius:50%;}
+  .appbar .act svg{width:22px; height:22px;}
+
+  /* search block */
+  .searchblock{padding:14px 14px 6px;}
+  .searchbox{
+    display:flex; align-items:center; gap:8px; border:1px solid var(--outline);
+    border-radius:12px; padding:10px 12px; background:#fff;
+  }
+  .searchbox svg{width:20px; height:20px; color:var(--text-2); flex:0 0 auto;}
+  .searchbox input{border:0; outline:0; flex:1; font-size:15px; color:var(--text); background:transparent;}
+  .chiprow{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--outline); border-radius:16px; padding:6px 12px;
+    font-size:13px; color:var(--text-2); background:#fff;
+  }
+  .chip.on{background:var(--brand); color:#fff; border-color:var(--brand); font-weight:600;}
+  .chip.on.alt{background:#E8F1FF; color:var(--brand-dark); border-color:#BFD8FF;}
+
+  .progresscard{
+    margin:12px 14px 4px; border:1px solid var(--outline); border-radius:12px; padding:14px; background:#fff;
+  }
+  .progresscard .top{display:flex; align-items:center;}
+  .progresscard .top b{flex:1; font-size:14px;}
+  .progresscard .btn{
+    border:1px solid var(--brand); color:var(--brand); border-radius:8px;
+    padding:5px 12px; font-size:12px; font-weight:600; background:#fff;
+  }
+  .bar{height:8px; border-radius:6px; background:#EEF0F2; margin-top:10px; overflow:hidden;}
+  .bar > i{display:block; height:100%; width:62%; background:var(--brand);}
+  .progresscard .sub{font-size:12px; color:var(--text-2); margin-top:6px;}
+
+  .divider{height:1px; background:var(--outline); margin:8px 0;}
+  .resultcount{padding:8px 16px 4px; font-size:13px; color:var(--text-2);}
+  .list{flex:1; overflow:auto; padding:6px 8px;}
+  .card{
+    border:1px solid var(--outline); border-radius:12px; padding:12px 14px; margin:6px 6px; background:#fff;
+  }
+  .card .r1{display:flex; align-items:center; gap:10px;}
+  .card .r1 .ic{width:22px; height:22px; color:var(--brand); flex:0 0 auto;}
+  .card .r1 .nm{flex:1; font-weight:600; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card .r1 .op{width:20px; height:20px; color:var(--text-2);}
+  .card .path{font-size:12px; color:var(--text-2); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card .meta{font-size:12px; color:var(--text-2); margin-top:2px;}
+  .card .snip{font-size:13px; margin-top:6px; color:#333;}
+  .card .snip mark{background:var(--highlight); padding:0 2px; border-radius:3px; font-weight:600;}
+  .empty{flex:1; display:grid; place-items:center; text-align:center; color:var(--text-2); padding:24px; font-size:14px;}
+
+  /* settings */
+  .settings{flex:1; overflow:auto; padding:6px 0;}
+  .cat{font-size:12px; color:var(--text-2); text-transform:uppercase; letter-spacing:.5px; padding:14px 16px 4px;}
+  .row{display:flex; align-items:center; padding:13px 16px; border-bottom:1px solid #F0F0F0; background:#fff;}
+  .row .lbl{flex:1; font-size:14px;}
+  .row .val{font-size:13px; color:var(--text-2); margin-right:6px;}
+  .row .chev{color:#BBB; font-size:18px;}
+  .sw{width:42px; height:24px; border-radius:14px; background:var(--brand); position:relative; flex:0 0 auto;}
+  .sw::after{content:""; position:absolute; top:2px; right:2px; width:20px; height:20px; border-radius:50%; background:#fff;}
+  .sw.off{background:#D6D8DB;}
+
+  /* flow diagram */
+  .flow{display:flex; gap:0; align-items:stretch; flex-wrap:wrap;}
+  .node{background:#fff; border:1px solid var(--outline); border-radius:12px; padding:14px 16px; min-width:150px; flex:1 1 160px;}
+  .node .t{font-weight:700; color:var(--brand); font-size:14px; margin-bottom:4px;}
+  .node .d{font-size:12px; color:var(--text-2);}
+  .arrow{display:grid; place-items:center; color:var(--text-2); font-size:22px; padding:0 10px;}
+
+  /* token table */
+  table.tok{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--outline); border-radius:12px; overflow:hidden;}
+  table.tok th,table.tok td{text-align:left; padding:10px 14px; border-bottom:1px solid #F0F0F0; font-size:13px;}
+  table.tok th{background:#FAFBFC; color:var(--text-2); font-weight:600;}
+  table.tok td code{background:#F2F4F6; padding:1px 6px; border-radius:5px; font-size:12px;}
+
+  .callout{border:1px solid #BFD8FF; background:#EAF2FF; border-radius:12px; padding:14px 16px; font-size:13px; max-width:820px;}
+  .callout b{color:var(--brand-dark);}
+  .tag{display:inline-block; background:#E8F1FF; color:var(--brand-dark); border:1px solid #BFD8FF; border-radius:6px; padding:1px 8px; font-size:12px; margin-right:6px;}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>
+    <svg width="30" height="30" viewBox="0 0 108 108"><circle cx="54" cy="54" r="54" fill="#007DFF"/><path fill="#FFFFFF" d="M70.5 63h-3.55l-1.26-1.21C67.85 60.27 69 57.5 69 54.5 69 46.54 62.46 40 54.5 40S40 46.54 40 54.5 46.54 69 54.5 69c2.97 0 5.74-1.15 7.81-2.91l1.26 1.21v3.55l22.5 22.49L93 85.49 70.5 63zm-16 0C47.55 63 42 57.45 42 50.5S47.55 38 54.5 38 67 43.55 67 50.5 61.45 63 54.5 63z"/></svg>
+    nSearch · 前端设计图
+  </h1>
+  <div class="sub">本地文件全文检索 · UI 高保真线框（基于现有布局与文案，蓝光白放大镜图标）</div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <h2>1 · 核心界面</h2>
+    <p class="note">以下为当前已实现布局的视觉还原，便于你先确认交互与信息层级，再决定后端是否继续。配色取自 <code>colors.xml</code>（品牌色 #007DFF，命中高亮 #FFF3C4），文案取自 <code>strings.xml</code>。</p>
+    <div class="phones">
+
+      <!-- Search home (idle) -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><div class="title">nSearch</div>
+            <div class="act" title="Index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div>
+            <div class="act" title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div class="act" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+            <div class="act" title="Day/Night"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input value="" placeholder="Search local files (full text)…" />
+            </div>
+            <div class="chiprow">
+              <span class="chip">Strict</span><span class="chip on alt">Medium</span><span class="chip">Loose</span>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="empty">Type a keyword to search.<br/>Build the index first to search file contents.</div>
+        </div>
+        <div class="cap">搜索主页（空闲）</div>
+      </div>
+
+      <!-- Search results -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><div class="title">nSearch</div>
+            <div class="act" title="Index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div>
+            <div class="act" title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div class="act" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+            <div class="act" title="Day/Night"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input value="quarterly report" />
+            </div>
+            <div class="chiprow"><span class="chip">Strict</span><span class="chip on alt">Medium</span><span class="chip">Loose</span></div>
+          </div>
+          <div class="resultcount">Found 128 results</div>
+          <div class="list">
+            <div class="card">
+              <div class="r1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+                <span class="nm">Q3_quarterly_report.pdf</span>
+                <svg class="op" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></div>
+              <div class="path">/Documents/finance/2025/Q3_quarterly_report.pdf</div>
+              <div class="meta">PDF · 2.4 MB</div>
+              <div class="snip">The <mark>quarterly report</mark> shows revenue up 12% QoQ, driven by the APAC segment and a one-time licensing gain in the <mark>quarterly report</mark> appendix…</div>
+            </div>
+            <div class="card">
+              <div class="r1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+                <span class="nm">notes.md</span>
+                <svg class="op" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></div>
+              <div class="path">/Notes/quarterly_report_notes.md</div>
+              <div class="meta">Markdown · 18 KB</div>
+              <div class="snip">Draft of the <mark>quarterly report</mark>: confirm the chart on slide 4 before sending to finance@…</div>
+            </div>
+            <div class="card">
+              <div class="r1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+                <span class="nm">budget_2025.xlsx</span>
+                <svg class="op" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></div>
+              <div class="path">/Sheets/budget_2025.xlsx</div>
+              <div class="meta">Excel · 510 KB</div>
+              <div class="snip">Sheet "Summary" references the <mark>quarterly report</mark> total on row 22; variance +3.1% vs plan.</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">搜索结果（高亮命中）</div>
+      </div>
+
+      <!-- Settings -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><div class="title">Settings</div></div>
+          <div class="settings">
+            <div class="cat">Default search mode</div>
+            <div class="row"><span class="lbl">Default search mode</span><span class="val">Medium</span><span class="chev">›</span></div>
+            <div class="row"><span class="lbl">Synonym expansion</span><span class="val"></span><div class="sw off"></div></div>
+
+            <div class="cat">Indexed file types</div>
+            <div class="row"><span class="lbl">Indexed file types</span><span class="val">7 selected</span><span class="chev">›</span></div>
+
+            <div class="cat">Per-file index size limit</div>
+            <div class="row"><span class="lbl">Limit</span><span class="val">1M (default)</span><span class="chev">›</span></div>
+
+            <div class="cat">Index scope</div>
+            <div class="row"><span class="lbl">Add folder</span><span class="chev">›</span></div>
+
+            <div class="cat">Index operations</div>
+            <div class="row"><span class="lbl">Trigger index</span><span class="chev">›</span></div>
+            <div class="row"><span class="lbl">Delete index</span><span class="chev">›</span></div>
+            <div class="row"><span class="lbl">Scan history</span><span class="chev">›</span></div>
+            <div class="row"><span class="lbl">Clear history</span><span class="chev">›</span></div>
+
+            <div class="cat">About</div>
+            <div class="row"><span class="lbl">About</span><span class="val">Version 0.0.1</span><span class="chev">›</span></div>
+          </div>
+        </div>
+        <div class="cap">设置页</div>
+      </div>
+
+      <!-- Scan history -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><div class="title">Scan History</div></div>
+          <div class="list">
+            <div class="card">
+              <div class="r1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span class="nm">/Documents</span><span class="op" style="color:#1BA672">✓</span></div>
+              <div class="meta">Last indexed: 2026-08-17 09:12 · took 3m 42s</div>
+              <div class="meta">1,284 files total</div>
+            </div>
+            <div class="card">
+              <div class="r1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span class="nm">/Downloads</span><span class="op" style="color:#1BA672">✓</span></div>
+              <div class="meta">Last indexed: 2026-08-15 21:03 · took 1m 08s</div>
+              <div class="meta">512 files total</div>
+            </div>
+            <div class="card">
+              <div class="r1"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                <span class="nm">/Pictures/receipts</span><span class="op" style="color:#C0392B">!</span></div>
+              <div class="meta">skipped · 3 files failed (unsupported type)</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">扫描历史</div>
+      </div>
+
+      <!-- Indexing progress (live) -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar"><div class="title">nSearch</div>
+            <div class="act" title="Index"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></div>
+            <div class="act" title="History"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            <div class="act" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+            <div class="act" title="Day/Night"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input value="" placeholder="Search local files (full text)…" />
+            </div>
+            <div class="chiprow"><span class="chip">Strict</span><span class="chip on alt">Medium</span><span class="chip">Loose</span></div>
+          </div>
+          <div class="progresscard">
+            <div class="top"><b>Indexing</b><span class="btn">Pause</span></div>
+            <div class="bar"><i style="width:62%"></i></div>
+            <div class="sub">Indexed 796 / 1,284 files</div>
+            <div class="sub" style="margin-top:2px;">Indexing: /Documents/finance/2025/Q3_quarterly_report.pdf</div>
+          </div>
+          <div class="empty">Indexing in progress…<br/>Results appear once the index is ready.</div>
+        </div>
+        <div class="cap">索引进度（实时卡片）</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · 索引 → 搜索 流程</h2>
+    <div class="flow">
+      <div class="node"><div class="t">① 选范围</div><div class="d">Settings → Add folder，可多选目录；前台 dataSync 服务 + 常驻通知</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">② 建索引</div><div class="d">Lucene 8 + ICUTokenizer 多语言分词；SQLite 记录已扫文件，可断点续扫</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">③ 检索</div><div class="d">NRT SearcherManager 边建边搜；Strict/Medium/Loose + 同义词</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="t">④ 结果</div><div class="d">高亮命中片段，点击用系统/默认应用打开原文件</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3 · 设计令牌（Design Tokens）</h2>
+    <table class="tok">
+      <tr><th>Token</th><th>值</th><th>用途</th></tr>
+      <tr><td>Brand</td><td><code>#007DFF</code></td><td>主色：选中态、进度条、主按钮</td></tr>
+      <tr><td>Brand dark</td><td><code>#0A5BD6</code></td><td>渐变/按压态</td></tr>
+      <tr><td>Text</td><td><code>#121212</code></td><td>主文字（日间）</td></tr>
+      <tr><td>Text 2</td><td><code>#5F6368</code></td><td>次要文字、路径、meta</td></tr>
+      <tr><td>Surface</td><td><code>#FFFFFF</code></td><td>卡片/页面背景</td></tr>
+      <tr><td>Outline</td><td><code>#E5E5E5</code></td><td>描边代替阴影做层级</td></tr>
+      <tr><td>Highlight</td><td><code>#FFF3C4</code></td><td>命中关键词高亮底色</td></tr>
+      <tr><td>Radius</td><td><code>12–14px</code></td><td>卡片/输入框圆角</td></tr>
+    </table>
+    <div class="callout" style="margin-top:14px;">
+      <b>图标现状（已落地）：</b> 启动图标已替换为你的 <code>icon_search.png</code>，落地为
+      <code>res/drawable/ic_launcher_fg.png</code>，由自适应图标 <code>mipmap-anydpi-v26/ic_launcher.xml</code>
+      引用，背景取品牌蓝 <code>@color/ic_launcher_background = #007DFF</code>。
+      早期遗留的 <code>ic_launcher_foreground.xml</code>（蓝光白放大镜矢量图）现已不再被引用，可忽略。
+      本设计图页头那个蓝放大镜 SVG 仅作文档示意，并非实际 App 图标。
+    </div>
+  </section>
+
+  <section>
+    <h2>4 · 文件类型矩阵（含 DOC / PPT）</h2>
+    <p class="note"><code>FileType</code> 覆盖 TXT / MD / CSV / PDF / XLS（xls+xlsx）/ DOC（doc+docx）/ PPT（ppt+pptx）共 7 种。下面是类型矩阵（影响设置页“Indexed file types”多选与抽取器）：</p>
+    <table class="tok">
+      <tr><th>类型</th><th>扩展名</th><th>抽取方案</th><th>状态</th></tr>
+      <tr><td>TXT</td><td>txt</td><td>UTF-8 直接读</td><td>已有</td></tr>
+      <tr><td>MD</td><td>md</td><td>UTF-8 直接读</td><td>已有</td></tr>
+      <tr><td>CSV</td><td>csv</td><td>UTF-8 直接读</td><td>已有</td></tr>
+      <tr><td>PDF</td><td>pdf</td><td>PDFBox（桌面版，逐文件降级）</td><td>已有（Android 有限）</td></tr>
+      <tr><td>XLS</td><td>xls / xlsx</td><td>jxl（xls）+ 自研 zip+XML（xlsx）</td><td>已有</td></tr>
+      <tr><td>DOC</td><td>doc / docx / dot</td><td>docx 自研 zip+XML 抽取；.doc / .dot 用 Apache POI HWPF 抽取</td><td>已有</td></tr>
+      <tr><td>PPT</td><td>ppt / pptx / pps / pot</td><td>pptx 自研 zip+XML 抽取；.ppt / .pps / .pot 用 Apache POI HSLF 抽取</td><td>已有</td></tr>
+    </table>
+    <div class="callout" style="margin-top:14px;">
+      <b>现状：</b> docx / pptx 用自研 zip+XML 轻量抽取器；<b>老格式 .doc / .ppt 已引入 Apache POI（poi + poi-scratchpad，HWPF / HSLF）做正文抽取</b>，抽取器对解析/运行时异常做了 try/catch 兜底，单文件失败仅降级为“文件名命中”，不会中断索引。
+      代价：release 包从 ~17MB 增至约 22MB（POI 核心 + scratchpad + commons-io，R8 已大幅裁剪）。
+      DOC/PPT 已加入设置页默认启用的 7 种类型。
+    </div>
+  </section>
+
+</div>
+</body>
+</html>
