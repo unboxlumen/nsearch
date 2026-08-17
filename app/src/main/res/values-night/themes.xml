@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorPrimaryVariant">@color/brand_dark</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/brand</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+
+        <item name="android:colorBackground">@color/bg_night</item>
+        <item name="colorSurface">@color/surface_night</item>
+        <item name="colorOnSurface">@color/text_night</item>
+
+        <item name="colorText">@color/text_night</item>
+        <item name="colorOutline">@color/outline_night</item>
+
+        <!-- 状态栏：与工具栏同色（深色），浅色文字，保证可读 -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <item name="android:textColorPrimary">@color/text_night</item>
+        <item name="android:textColorSecondary">@color/text_secondary_night</item>
+
+        <item name="toolbarStyle">@style/Widget.NSearch.Toolbar</item>
+        <item name="materialCardViewStyle">@style/Widget.NSearch.Card</item>
+        <item name="chipStyle">@style/Widget.NSearch.Chip</item>
+    </style>
+</resources>

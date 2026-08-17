@@ -1,0 +1,40 @@
+# Built application / Gradle build outputs
+# Match build dirs at any level (root, app/, module/)
+**/build/
+*.apk
+*.aar
+*.jar
+*.war
+*.class
+*.dex
+gen/
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# Local configuration (SDK path, etc.)
+local.properties
+
+# Signing keys — never commit keystores / key material
+*.keystore
+*.jks
+signing/
+
+# IDE / editor
+.idea/
+*.iml
+gradle
+.gradle
+.vscode/
+.DS_Store
+
+# Tool / environment cruft
+.superpowers/
+.trae-html-share-packages/
+
+# UI screenshots / design reference captures (binary, not source)
+shots/
+
+# WorkBuddy assistant internal data (not project source)
+.workbuddy/

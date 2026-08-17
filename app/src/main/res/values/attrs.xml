@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 图标统一使用此主题属性取色，自动随日/夜切换（见 UI_DESIGN_GUIDE.md §12.4） -->
+    <attr name="colorText" format="color" />
+    <attr name="colorOutline" format="color" />
+</resources>

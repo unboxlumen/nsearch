@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 单一主色 -->
+    <color name="brand">#007DFF</color>
+    <color name="brand_dark">#0A5BD6</color>
+
+    <!-- 文本（日间） -->
+    <color name="text_day">#121212</color>
+    <color name="text_night">#FAFAFA</color>
+
+    <!-- 背景 / 表面（扁平、浅色为主） -->
+    <color name="bg_day">#FFFFFF</color>
+    <color name="bg_night">#121212</color>
+    <color name="surface_day">#FFFFFF</color>
+    <color name="surface_night">#1E1E1E</color>
+
+    <!-- 描边（用描边代替阴影做层级） -->
+    <color name="outline_day">#E5E5E5</color>
+    <color name="outline_night">#2C2C2E</color>
+
+    <!-- 次要文字 -->
+    <color name="text_secondary_day">#5F6368</color>
+    <color name="text_secondary_night">#9AA0A6</color>
+
+    <!-- 命中高亮 -->
+    <color name="highlight_bg">#FFF3C4</color>
+
+    <!-- 启动图标背景 -->
+    <color name="ic_launcher_background">#357AFF</color>
+</resources>

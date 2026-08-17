@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 共享整个外部存储（需配合 MANAGE_EXTERNAL_STORAGE 才能访问） -->
+    <root-path name="storage" path="." />
+</paths>

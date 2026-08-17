@@ -1,0 +1,72 @@
+# nSearch ProGuard 规则
+# 说明：项目开启 android.enableR8.fullMode=true，R8 会激进裁剪，
+# Lucene / PDFBox / ICU 等库大量通过 SPI(ServiceLoader) 或反射加载类，必须显式保留。
+
+# ===== Apache Lucene =====
+-keep class org.apache.lucene.** { *; }
+-keep interface org.apache.lucene.** { *; }
+# SPI 服务实现类（codec / postings / docvalues / points）
+-keep class org.apache.lucene.codecs.** { *; }
+-keep class org.apache.lucene.analysis.** { *; }
+-keep class org.apache.lucene.search.similarities.** { *; }
+-keep class org.apache.lucene.util.** { *; }
+-keepattributes *Annotation*,Signature,EnclosingMethod,InnerClasses
+-keepnames class * implements org.apache.lucene.analysis.Analyzer
+# 关闭 Lucene 自带的资源名混淆（部分代码读取 META-INF 资源）
+-keep class org.apache.lucene.store.** { *; }
+
+# ===== ICU4J（lucene-analyzers-icu 的传递依赖）=====
+# ICUTokenizer 在运行时按需加载 break iterator 数据，整包保留最稳妥
+-keep class com.ibm.icu.** { *; }
+-keep interface com.ibm.icu.** { *; }
+-dontwarn com.ibm.icu.**
+
+# ===== Apache PDFBox（桌面版，用于 PDF 文本抽取）=====
+-keep class org.apache.pdfbox.** { *; }
+-keep class org.apache.fontbox.** { *; }
+-keep interface org.apache.pdfbox.** { *; }
+-keep interface org.apache.fontbox.** { *; }
+-dontwarn org.apache.pdfbox.**
+-dontwarn org.apache.fontbox.**
+-dontwarn org.apache.commons.logging.**
+
+# ===== JXL（.xls 读取）=====
+-keep class jxl.** { *; }
+-dontwarn jxl.**
+
+# ===== jieba 中文分词（com.huaban:jieba-analysis，实际包名 com.huaban.analysis.jieba）=====
+# 运行时通过 ClassLoader 从 jar 资源加载词典，整包保留；其 dict 资源非 res/，shrinkResources 不会裁剪。
+-keep class com.huaban.analysis.jieba.** { *; }
+-dontwarn com.huaban.analysis.jieba.**
+
+# ===== Apache POI（老格式 .doc/.ppt 抽取：HWPF/HSLF，位于 poi-scratchpad）=====
+# 整包保留避免 R8 裁掉通过 SPI/反射加载的类；-dontwarn 屏蔽 java.awt 等 Android 不存在的引用
+# （纯文本抽取路径不触发 AWT，缺失引用仅在渲染相关方法被调用时才运行时报错，已在 Extractor 内 try/catch 兜底）。
+-keep class org.apache.poi.** { *; }
+-keep interface org.apache.poi.** { *; }
+-keep class org.apache.commons.io.** { *; }
+-keep class org.apache.commons.codec.** { *; }
+-dontwarn org.apache.poi.**
+-dontwarn org.apache.commons.**
+-dontwarn java.awt.**
+-dontwarn com.sun.**
+# POI 的日志门面 log4j-api 在 Android 上缺失可选依赖（aQute.bnd / org.osgi），仅用于 OSGi 服务发现，
+# 运行时走不到；整包保留 log4j-api 并用 -dontwarn 屏蔽缺失类引用。
+-keep class org.apache.logging.log4j.** { *; }
+-dontwarn org.apache.logging.log4j.**
+-dontwarn aQute.bnd.**
+-dontwarn org.osgi.**
+
+# ===== 通用 =====
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+# 保留 Application / 四大组件（避免被裁剪）
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Service
+-keep public class * extends android.content.BroadcastReceiver
+-keep public class * extends android.content.ContentProvider
+-keep public class * extends android.app.Application
+
+# 保留带 @Keep 标注的类/方法/字段
+-keep @androidx.annotation.Keep class * { *; }
+-keepclassmembers class * { @androidx.annotation.Keep *; }

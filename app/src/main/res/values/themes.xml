@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorPrimaryVariant">@color/brand_dark</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">@color/brand</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+
+        <item name="android:colorBackground">@color/bg_day</item>
+        <item name="colorSurface">@color/surface_day</item>
+        <item name="colorOnSurface">@color/text_day</item>
+
+        <item name="colorText">@color/text_day</item>
+        <item name="colorOutline">@color/outline_day</item>
+
+        <!-- 状态栏：与工具栏同色（白底），深色文字，避免白底白字看不见 -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <item name="android:textColorPrimary">@color/text_day</item>
+        <item name="android:textColorSecondary">@color/text_secondary_day</item>
+
+        <item name="toolbarStyle">@style/Widget.NSearch.Toolbar</item>
+        <item name="materialCardViewStyle">@style/Widget.NSearch.Card</item>
+        <item name="chipStyle">@style/Widget.NSearch.Chip</item>
+    </style>
+
+    <style name="Widget.NSearch.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="titleTextColor">?attr/colorText</item>
+        <item name="navigationIconTint">?attr/colorText</item>
+    </style>
+
+    <style name="Widget.NSearch.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardElevation">0dp</item>
+        <item name="cardCornerRadius">12dp</item>
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="strokeColor">?attr/colorOutline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.NSearch.Chip" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipBackgroundColor">?attr/colorSurface</item>
+        <item name="android:textColor">?attr/colorText</item>
+    </style>
+
+</resources>
