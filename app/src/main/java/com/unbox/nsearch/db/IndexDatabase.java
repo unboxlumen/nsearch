@@ -1,21 +1,24 @@
 package com.unbox.nsearch.db;
 
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.unbox.nsearch.model.ScanRecord;
 
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * 索引状态库。保存每个已索引文件的元数据，用于「重新打开时增量同步」。
- * 同时保存每次扫描的「文件扫描历史」。
+ * SQLite 持有者 + 表结构定义。
+ *
+ * 之前此文件混了 indexed_files 与 scan_history 两张表的全部 CRUD，
+ * 现在拆为 {@link FileMetaDao} 与 {@link ScanHistoryDao}，
+ * 这里只负责 {@link SQLiteOpenHelper} 的生命周期与建表语句。
+ *
+ * 出于「保持外部行为完全不变」的约束，旧的便捷方法（{@code FileRow} 嵌套类、
+ * {@link #getRow}、{@link #upsert} 等）仍以委托形式保留，调用方无需改动。
+ * 历史 API 标记为 {@code @Deprecated}，后续阶段会逐步迁移到 DAO 直调。
  */
 public final class IndexDatabase extends SQLiteOpenHelper {
 
@@ -27,6 +30,9 @@ public final class IndexDatabase extends SQLiteOpenHelper {
 
     private static IndexDatabase instance;
 
+    private final FileMetaDao fileDao;
+    private final ScanHistoryDao historyDao;
+
     public static synchronized IndexDatabase get(Context context) {
         if (instance == null) instance = new IndexDatabase(context.getApplicationContext());
         return instance;
@@ -34,28 +40,53 @@ public final class IndexDatabase extends SQLiteOpenHelper {
 
     private IndexDatabase(Context ctx) {
         super(ctx, NAME, null, VERSION);
+        this.fileDao = new FileMetaDao(this);
+        this.historyDao = new ScanHistoryDao(this);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE indexed_files (" +
-                "path TEXT PRIMARY KEY, name TEXT, size INTEGER, modified INTEGER, " +
-                "length_chars INTEGER, status INTEGER, ext TEXT)");
-        db.execSQL("CREATE TABLE scan_history (" +
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, started INTEGER, finished INTEGER, " +
-                "total INTEGER, indexed INTEGER, failed INTEGER, skipped INTEGER, " +
-                "duration INTEGER, trigger TEXT)");
+        db.execSQL("CREATE TABLE " + FileMetaDao.TABLE + " (" +
+                FileMetaDao.Cols.PATH + " TEXT PRIMARY KEY, " +
+                FileMetaDao.Cols.NAME + " TEXT, " +
+                FileMetaDao.Cols.SIZE + " INTEGER, " +
+                FileMetaDao.Cols.MODIFIED + " INTEGER, " +
+                FileMetaDao.Cols.LENGTH_CHARS + " INTEGER, " +
+                FileMetaDao.Cols.STATUS + " INTEGER, " +
+                FileMetaDao.Cols.EXT + " TEXT)");
+        db.execSQL("CREATE TABLE " + ScanHistoryDao.TABLE + " (" +
+                ScanHistoryDao.Cols.ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                ScanHistoryDao.Cols.STARTED + " INTEGER, " +
+                ScanHistoryDao.Cols.FINISHED + " INTEGER, " +
+                ScanHistoryDao.Cols.TOTAL + " INTEGER, " +
+                ScanHistoryDao.Cols.INDEXED + " INTEGER, " +
+                ScanHistoryDao.Cols.FAILED + " INTEGER, " +
+                ScanHistoryDao.Cols.SKIPPED + " INTEGER, " +
+                ScanHistoryDao.Cols.DURATION + " INTEGER, " +
+                ScanHistoryDao.Cols.TRIGGER + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
-        db.execSQL("DROP TABLE IF EXISTS indexed_files");
-        db.execSQL("DROP TABLE IF EXISTS scan_history");
+        db.execSQL("DROP TABLE IF EXISTS " + FileMetaDao.TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + ScanHistoryDao.TABLE);
         onCreate(db);
     }
 
-    // ---------- indexed_files ----------
+    // ---------- DAO 访问 ----------
 
+    public FileMetaDao fileMeta() {
+        return fileDao;
+    }
+
+    public ScanHistoryDao scanHistory() {
+        return historyDao;
+    }
+
+    // ---------- indexed_files 兼容旧 API（委托给 FileMetaDao）----------
+
+    /** 兼容旧调用方；内部委托给 {@link FileMetaDao#getRow}。 */
+    @Deprecated
     public static class FileRow {
         public String path;
         public String name;
@@ -66,102 +97,61 @@ public final class IndexDatabase extends SQLiteOpenHelper {
         public String ext;
     }
 
+    @Deprecated
     public FileRow getRow(String path) {
-        try (Cursor c = getReadableDatabase().query("indexed_files", null,
-                "path=?", new String[]{path}, null, null, null)) {
-            if (c.moveToFirst()) {
-                FileRow r = new FileRow();
-                r.path = c.getString(c.getColumnIndexOrThrow("path"));
-                r.name = c.getString(c.getColumnIndexOrThrow("name"));
-                r.size = c.getLong(c.getColumnIndexOrThrow("size"));
-                r.modified = c.getLong(c.getColumnIndexOrThrow("modified"));
-                r.lengthChars = c.getInt(c.getColumnIndexOrThrow("length_chars"));
-                r.status = c.getInt(c.getColumnIndexOrThrow("status"));
-                r.ext = c.getString(c.getColumnIndexOrThrow("ext"));
-                return r;
-            }
-        }
-        return null;
+        FileMetaDao.FileRow row = fileDao.getRow(path);
+        if (row == null) return null;
+        FileRow r = new FileRow();
+        r.path = row.path;
+        r.name = row.name;
+        r.size = row.size;
+        r.modified = row.modified;
+        r.lengthChars = row.lengthChars;
+        r.status = row.status;
+        r.ext = row.ext;
+        return r;
     }
 
-    /** 写入/更新一条文件索引记录。 */
+    @Deprecated
     public void upsert(String path, String name, long size, long modified, int lengthChars,
                        int status, String ext) {
-        ContentValues v = new ContentValues();
-        v.put("path", path);
-        v.put("name", name);
-        v.put("size", size);
-        v.put("modified", modified);
-        v.put("length_chars", lengthChars);
-        v.put("status", status);
-        v.put("ext", ext);
-        getWritableDatabase().insertWithOnConflict("indexed_files", null, v,
-                SQLiteDatabase.CONFLICT_REPLACE);
+        fileDao.upsert(path, name, size, modified, lengthChars, status, ext);
     }
 
+    @Deprecated
     public void deleteByPath(String path) {
-        getWritableDatabase().delete("indexed_files", "path=?", new String[]{path});
+        fileDao.deleteByPath(path);
     }
 
+    @Deprecated
     public void clearAll() {
-        getWritableDatabase().delete("indexed_files", null, null);
+        fileDao.clearAll();
     }
 
-    /** 返回库中全部 path（用于与本次扫描结果做差集，清理已删除文件）。 */
+    @Deprecated
     public Set<String> getAllPaths() {
-        Set<String> set = new HashSet<>();
-        try (Cursor c = getReadableDatabase().query("indexed_files",
-                new String[]{"path"}, null, null, null, null, null)) {
-            while (c.moveToNext()) set.add(c.getString(0));
-        }
-        return set;
+        return fileDao.getAllPaths();
     }
 
+    @Deprecated
     public int countDone() {
-        try (Cursor c = getReadableDatabase().query("indexed_files",
-                new String[]{"COUNT(*)"}, "status=?", new String[]{String.valueOf(STATUS_DONE)},
-                null, null, null)) {
-            return c.moveToFirst() ? c.getInt(0) : 0;
-        }
+        return fileDao.countDone();
     }
 
-    // ---------- scan_history ----------
+    // ---------- scan_history 兼容旧 API（委托给 ScanHistoryDao）----------
 
+    @Deprecated
     public void insertScanRecord(ScanRecord r) {
-        ContentValues v = new ContentValues();
-        v.put("started", r.startedAt);
-        v.put("finished", r.finishedAt);
-        v.put("total", r.totalFiles);
-        v.put("indexed", r.indexedFiles);
-        v.put("failed", r.failedFiles);
-        v.put("skipped", r.skippedFiles);
-        v.put("duration", r.durationMs);
-        v.put("trigger", r.trigger);
-        getWritableDatabase().insert("scan_history", null, v);
+        historyDao.insert(r);
     }
 
+    @Deprecated
     public List<ScanRecord> getAllScanRecords() {
-        List<ScanRecord> list = new ArrayList<>();
-        try (Cursor c = getReadableDatabase().query("scan_history", null, null, null,
-                null, null, "id DESC")) {
-            while (c.moveToNext()) {
-                ScanRecord r = new ScanRecord();
-                r.id = c.getLong(c.getColumnIndexOrThrow("id"));
-                r.startedAt = c.getLong(c.getColumnIndexOrThrow("started"));
-                r.finishedAt = c.getLong(c.getColumnIndexOrThrow("finished"));
-                r.totalFiles = c.getInt(c.getColumnIndexOrThrow("total"));
-                r.indexedFiles = c.getInt(c.getColumnIndexOrThrow("indexed"));
-                r.failedFiles = c.getInt(c.getColumnIndexOrThrow("failed"));
-                r.skippedFiles = c.getInt(c.getColumnIndexOrThrow("skipped"));
-                r.durationMs = c.getLong(c.getColumnIndexOrThrow("duration"));
-                r.trigger = c.getString(c.getColumnIndexOrThrow("trigger"));
-                list.add(r);
-            }
-        }
-        return list;
+        return historyDao.getAll();
     }
 
+    @Deprecated
     public void clearScanRecords() {
-        getWritableDatabase().delete("scan_history", null, null);
+        historyDao.clear();
     }
 }
