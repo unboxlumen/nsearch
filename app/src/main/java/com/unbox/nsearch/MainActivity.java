@@ -1,10 +1,7 @@
 package com.unbox.nsearch;
 
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -20,8 +17,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,26 +30,20 @@ import com.unbox.nsearch.db.IndexDatabase;
 import com.unbox.nsearch.model.SearchResult;
 import com.unbox.nsearch.ui.SearchResultAdapter;
 import com.unbox.nsearch.ui.SpaceItemDecoration;
-import com.unbox.nsearch.util.FormatUtil;
+import com.unbox.nsearch.util.FileOpener;
+import com.unbox.nsearch.util.PermissionHelper;
+import com.unbox.nsearch.util.SearchExecutor;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity
-        implements IndexController.Listener, SearchResultAdapter.OnItemClick {
-
-    private static final int REQ_ALL_FILES = 1001;
-    private static final int REQ_READ = 1002;
+        implements IndexController.Listener, SearchResultAdapter.OnItemClick,
+        PermissionHelper.Callback {
 
     private IndexController controller;
     private Settings settings;
     private LuceneManager km;
     private SearchResultAdapter adapter;
-    private ExecutorService searchExecutor;
-    private final android.os.Handler debounce = new android.os.Handler();
 
     // ═══ 搜索区视图 ═══
     private EditText searchBox;
@@ -79,6 +68,10 @@ public class MainActivity extends AppCompatActivity
 
     private String lastQuery = "";
 
+    private final android.os.Handler debounce = new android.os.Handler();
+
+    private PermissionHelper permissionHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,7 +83,6 @@ public class MainActivity extends AppCompatActivity
 
         controller = IndexController.get(this);
         settings = new Settings(this);
-        searchExecutor = Executors.newSingleThreadExecutor();
 
         // ── 绑定搜索区 ──
         searchBox = findViewById(R.id.searchBox);
@@ -117,10 +109,12 @@ public class MainActivity extends AppCompatActivity
         // 尝试打开索引（失败则搜索不可用，可到设置里删除索引重试）
         try {
             km = LuceneManager.get(this);
-        } catch (IOException e) {
+        } catch (java.io.IOException e) {
             km = null;
             Toast.makeText(this, "索引打开失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+
+        permissionHelper = new PermissionHelper(this, this);
 
         initSearchBox();
         btnAdvanced.setOnClickListener(v -> openAdvancedSheet());
@@ -207,9 +201,11 @@ public class MainActivity extends AppCompatActivity
             return;
         }
         final String q = lastQuery;
-        searchExecutor.execute(() -> {
-            List<SearchResult> res = SearchEngine.search(this, km, q, settings, 200);
-            runOnUiThread(() -> showResults(res, q));
+        // 用 SearchExecutor 取代之前 MainActivity 自建的 SingleThreadExecutor。
+        // 搜索本身在 worker 线程完成，结果在主线程显示（保留与原版完全一致的语义）。
+        SearchExecutor.get().submit(() -> {
+            List<SearchResult> res = SearchEngine.search(MainActivity.this, km, q, settings, 200);
+            SearchExecutor.get().postToMain(() -> showResults(res, q));
         });
     }
 
@@ -316,35 +312,13 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void ensurePermissionThenIndex() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                try {
-                    startActivityForResult(buildAllFilesAccessIntent(), REQ_ALL_FILES);
-                } catch (Exception e) {
-                    showPermissionGuide();
-                }
-                return;
-            }
-        } else if (ContextCompat.checkSelfPermission(this,
-                android.Manifest.permission.READ_EXTERNAL_STORAGE)
-                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, REQ_READ);
-            return;
-        }
-        controller.requestStart();
+        permissionHelper.request();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQ_ALL_FILES) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
-                    && Environment.isExternalStorageManager()) {
-                controller.requestStart();
-            } else {
-                showPermissionGuide();
-            }
-        }
+        permissionHelper.onActivityResult(requestCode);
     }
 
     // 兼容新旧 AndroidX 签名：使用 Activity 基类 4 参数版本
@@ -353,69 +327,29 @@ public class MainActivity extends AppCompatActivity
                                            @NonNull int[] grantResults,
                                            @SuppressWarnings("unused") int extraData) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults, extraData);
-        if (requestCode == REQ_READ && grantResults.length > 0
-                && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            controller.requestStart();
-        } else {
-            showPermissionGuide();
-        }
+        permissionHelper.onRequestPermissionsResult(requestCode, grantResults);
     }
 
-    private void showPermissionGuide() {
+    // ---------------- PermissionHelper.Callback ----------------
+
+    @Override
+    public void onGranted() {
+        controller.requestStart();
+    }
+
+    @Override
+    public void onDenied(boolean launchedSettings) {
+        if (launchedSettings) return; // 已经在跳系统设置页，等用户回来
         Snackbar.make(findViewById(android.R.id.content), R.string.no_permission, Snackbar.LENGTH_LONG)
-                .setAction(R.string.go_settings, v -> openSettings())
+                .setAction(R.string.go_settings, v -> permissionHelper.openAppSettings())
                 .show();
-    }
-
-    private void openSettings() {
-        Intent i;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            i = buildAllFilesAccessIntent();
-        } else {
-            i = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:" + getPackageName()));
-        }
-        try {
-            startActivity(i);
-        } catch (Exception e) {
-            try {
-                startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));
-            } catch (Exception ignored) { }
-        }
-    }
-
-    private Intent buildAllFilesAccessIntent() {
-        Intent i = new Intent(android.provider.Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-        i.setData(Uri.parse("package:" + getPackageName()));
-        if (getPackageManager().resolveActivity(i, 0) == null) {
-            i = new Intent(android.provider.Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION,
-                    Uri.parse("package:" + getPackageName()));
-        }
-        return i;
     }
 
     // ---------------- 打开文件 ----------------
 
     @Override
     public void onOpen(SearchResult r) {
-        try {
-            Uri uri;
-            if (r.contentUri) {
-                uri = Uri.parse(r.openUri);
-            } else {
-                File f = new File(r.openUri);
-                if (!f.exists()) {
-                    Toast.makeText(this, "文件不存在", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                uri = FileProvider.getUriForFile(this, "com.unbox.nsearch.fileprovider", f);
-            }
-            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(intent);
-        } catch (Exception e) {
-            Toast.makeText(this, "无法打开：" + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        FileOpener.open(this, r);
     }
 
     // ---------------- 生命周期 ----------------
@@ -435,7 +369,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        if (searchExecutor != null) searchExecutor.shutdownNow();
         super.onDestroy();
     }
 }
