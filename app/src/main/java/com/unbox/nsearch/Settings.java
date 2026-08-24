@@ -22,7 +22,20 @@ public final class Settings {
     public static final String KEY_SCOPE_URIS = "scope_uris";
 
     public enum SearchMode {
-        STRICT, MEDIUM, LOOSE
+        STRICT, MEDIUM, LOOSE;
+
+        /**
+         * 把 SharedPreferences 字符串还原为枚举。
+         * 未知值与 {@code null} 一律回退到 {@link #MEDIUM}（保持原 {@code getSearchMode()} 行为）。
+         */
+        public static SearchMode parse(String raw) {
+            if (raw == null) return MEDIUM;
+            switch (raw) {
+                case "strict": return STRICT;
+                case "loose": return LOOSE;
+                default: return MEDIUM;
+            }
+        }
     }
 
     private static final Set<String> DEFAULT_TYPES;
@@ -44,12 +57,7 @@ public final class Settings {
     }
 
     public SearchMode getSearchMode() {
-        String v = prefs.getString(KEY_MODE, "medium");
-        switch (v) {
-            case "strict": return SearchMode.STRICT;
-            case "loose": return SearchMode.LOOSE;
-            default: return SearchMode.MEDIUM;
-        }
+        return SearchMode.parse(prefs.getString(KEY_MODE, "medium"));
     }
 
     public boolean isSynonymEnabled() {
