@@ -5,25 +5,21 @@ import android.content.Intent;
 
 import androidx.core.content.ContextCompat;
 
+import com.unbox.nsearch.db.FileMetaDao;
 import com.unbox.nsearch.db.IndexDatabase;
+import com.unbox.nsearch.index.DocumentBuilder;
+import com.unbox.nsearch.index.IncrementalSync;
+import com.unbox.nsearch.index.StateNotifier;
 import com.unbox.nsearch.model.ScanRecord;
-import com.unbox.nsearch.util.TextExtractor;
 import com.unbox.nsearch.service.IndexingService;
+import com.unbox.nsearch.util.TextExtractor;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.LongPoint;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.Term;
 
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -34,6 +30,13 @@ import java.util.concurrent.Executors;
  *  - 依据数据库中的文件元数据做增量同步：未变更的文件直接跳过，已删除文件清理；
  *  - 进度通过 {@link Listener} 回调到主线程，UI 可随时绑定/解绑；
  *  - 前台 Service 仅负责常驻通知与 Wakelock，真正的状态在单例中，故重开 App 也能续传。
+ *
+ * <p>重构后：
+ *  - {@link DocumentBuilder}    构建 Lucene Document
+ *  - {@link IncrementalSync}     增量跳过 / 删除清理
+ *  - {@link StateNotifier}       状态回调到主线程
+ *
+ * 本类只剩「编排」职责：扫描 → 循环 → 暂停/取消 → 调度上述三者 → 写历史。
  */
 public final class IndexController {
 
@@ -59,9 +62,8 @@ public final class IndexController {
     private static IndexController instance;
 
     private final Context appCtx;
-    private final android.os.Handler mainHandler;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
-    private final List<Listener> listeners = new CopyOnWriteArrayList<>();
+    private final StateNotifier notifier = new StateNotifier();
     private final State state = new State();
     private final Object pauseLock = new Object();
     private volatile boolean paused = false;
@@ -75,7 +77,6 @@ public final class IndexController {
 
     private IndexController(Context ctx) {
         this.appCtx = ctx;
-        this.mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     }
 
     public State getState() {
@@ -83,13 +84,13 @@ public final class IndexController {
     }
 
     public void addListener(Listener l) {
-        listeners.add(l);
+        notifier.addListener(l);
         l.onStatus(state);
         l.onProgress(state);
     }
 
     public void removeListener(Listener l) {
-        listeners.remove(l);
+        notifier.removeListener(l);
     }
 
     public void setHost(IndexingService s) {
@@ -153,8 +154,8 @@ public final class IndexController {
                 state.failed = 0;
                 state.currentFile = "";
             }
-            notifyStatus();
-            notifyProgress();
+            notifier.notifyStatus(state);
+            notifier.notifyProgress(state);
         });
     }
 
@@ -163,6 +164,7 @@ public final class IndexController {
     private void runIndex() {
         IndexDatabase db = IndexDatabase.get(appCtx);
         Settings settings = new Settings(appCtx);
+        FileMetaDao fileDao = db.fileMeta();
         long start = System.currentTimeMillis();
 
         synchronized (state) {
@@ -175,7 +177,7 @@ public final class IndexController {
             state.currentFile = "";
             state.total = 0;
         }
-        notifyStatus();
+        notifier.notifyStatus(state);
 
         List<FileScanner.ScanItem> items;
         try {
@@ -186,13 +188,15 @@ public final class IndexController {
         synchronized (state) {
             state.total = items.size();
         }
-        notifyProgress();
+        notifier.notifyProgress(state);
 
         LuceneManager km = null;
+        IncrementalSync sync = null;
         try {
             km = LuceneManager.get(appCtx);
+            sync = new IncrementalSync(km, fileDao);
             int charLimit = settings.getCharLimit();
-            Set<String> seen = new HashSet<>();
+            Set<String> seen = IncrementalSync.newSeenSet();
 
             for (FileScanner.ScanItem item : items) {
                 if (cancelled) break;
@@ -206,20 +210,17 @@ public final class IndexController {
                 seen.add(item.getPath());
 
                 // 增量同步：未变更则跳过
-                IndexDatabase.FileRow row = db.getRow(item.getPath());
-                if (row != null && row.status == IndexDatabase.STATUS_DONE
-                        && row.size == item.length()
-                        && (item.lastModified() == 0 || row.modified == item.lastModified())) {
+                if (sync.isUnchanged(item)) {
                     synchronized (state) {
                         state.indexed++;
                         state.skipped++;
                         state.currentFile = item.getName();
                     }
-                    notifyProgress();
+                    notifier.notifyProgress(state);
                     continue;
                 }
 
-                indexOne(km, db, item, charLimit);
+                indexOne(km, fileDao, item, charLimit);
 
                 if (state.indexed % 200 == 0) {
                     km.commit();
@@ -229,7 +230,7 @@ public final class IndexController {
                     state.indexed++;
                     state.currentFile = item.getName();
                 }
-                if (state.indexed % 25 == 0) notifyProgress();
+                if (state.indexed % 25 == 0) notifier.notifyProgress(state);
             }
 
             if (km != null) {
@@ -238,12 +239,7 @@ public final class IndexController {
             }
 
             // 清理已从磁盘删除的文件
-            Set<String> all = db.getAllPaths();
-            all.removeAll(seen);
-            for (String p : all) {
-                if (km != null) km.delete(p);
-                db.deleteByPath(p);
-            }
+            if (km != null) sync.cleanupDeleted(seen);
             if (km != null) {
                 km.commit();
                 km.maybeRefresh();
@@ -256,14 +252,14 @@ public final class IndexController {
                 state.status = cancelled ? Status.CANCELLED : Status.DONE;
                 state.endTime = end;
             }
-            notifyStatus();
-            notifyProgress();
+            notifier.notifyStatus(state);
+            notifier.notifyProgress(state);
 
             ScanRecord rec = new ScanRecord(start, end, state.total,
                     state.indexed - state.skipped, state.failed, state.skipped,
                     end - start, "manual");
             try {
-                db.insertScanRecord(rec);
+                db.scanHistory().insert(rec);
             } catch (Throwable ignored) {
             }
 
@@ -271,13 +267,13 @@ public final class IndexController {
         }
     }
 
-    private void indexOne(LuceneManager km, IndexDatabase db, FileScanner.ScanItem item, int charLimit) {
+    private void indexOne(LuceneManager km, FileMetaDao fileDao, FileScanner.ScanItem item, int charLimit) {
         String text;
         try (InputStream in = item.openStream(appCtx)) {
             FileType type = FileType.match(item.getName());
             text = TextExtractor.extract(in, type, item.getExt(), charLimit);
         } catch (Exception e) {
-            db.upsert(item.getPath(), item.getName(), item.length(), item.lastModified(),
+            fileDao.upsert(item.getPath(), item.getName(), item.length(), item.lastModified(),
                     0, IndexDatabase.STATUS_FAILED, item.getExt());
             synchronized (state) {
                 state.failed++;
@@ -285,51 +281,17 @@ public final class IndexController {
             return;
         }
         if (text == null) text = "";
-        Document doc = buildDoc(item, text);
+        Document doc = DocumentBuilder.build(item, text);
         try {
             km.updateDocument(item.getPath(), doc);
-            db.upsert(item.getPath(), item.getName(), item.length(), item.lastModified(),
+            fileDao.upsert(item.getPath(), item.getName(), item.length(), item.lastModified(),
                     text.length(), IndexDatabase.STATUS_DONE, item.getExt());
         } catch (Exception e) {
-            db.upsert(item.getPath(), item.getName(), item.length(), item.lastModified(),
+            fileDao.upsert(item.getPath(), item.getName(), item.length(), item.lastModified(),
                     0, IndexDatabase.STATUS_FAILED, item.getExt());
             synchronized (state) {
                 state.failed++;
             }
         }
-    }
-
-    private Document buildDoc(FileScanner.ScanItem item, String text) {
-        Document doc = new Document();
-        doc.add(new StringField(LuceneManager.Fields.PATH, item.getPath(), Field.Store.YES));
-        doc.add(new TextField(LuceneManager.Fields.NAME, item.getName(), Field.Store.YES));
-        doc.add(new StringField(LuceneManager.Fields.EXT, item.getExt(), Field.Store.YES));
-        doc.add(new LongPoint(LuceneManager.Fields.SIZE, item.length()));
-        doc.add(new StoredField(LuceneManager.Fields.SIZE, item.length()));
-        doc.add(new LongPoint(LuceneManager.Fields.MODIFIED, item.lastModified()));
-        doc.add(new StoredField(LuceneManager.Fields.MODIFIED, item.lastModified()));
-        String snippet = text.length() > LuceneManager.SNIPPET_LIMIT
-                ? text.substring(0, LuceneManager.SNIPPET_LIMIT) : text;
-        doc.add(new TextField(LuceneManager.Fields.CONTENT, text, Field.Store.NO));
-        doc.add(new StoredField(LuceneManager.Fields.SNIPPET, snippet));
-        doc.add(new StringField(LuceneManager.Fields.DISPLAY, item.getDisplayPath(), Field.Store.YES));
-        doc.add(new StringField(LuceneManager.Fields.OPEN_URI, item.getOpenUri(), Field.Store.YES));
-        doc.add(new StringField(LuceneManager.Fields.IS_CONTENT,
-                item.isContentUri() ? "1" : "0", Field.Store.YES));
-        return doc;
-    }
-
-    private void notifyProgress() {
-        final State s = state;
-        mainHandler.post(() -> {
-            for (Listener l : listeners) l.onProgress(s);
-        });
-    }
-
-    private void notifyStatus() {
-        final State s = state;
-        mainHandler.post(() -> {
-            for (Listener l : listeners) l.onStatus(s);
-        });
     }
 }
