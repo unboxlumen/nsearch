@@ -89,6 +89,14 @@ public class MainActivity extends AppCompatActivity
         searchBox = findViewById(R.id.searchBox);
         btnClear = findViewById(R.id.btnClear);
         btnAdvanced = findViewById(R.id.btnAdvanced);
+        // 放大镜 icon 也可点击触发搜索(兜底:键盘回车失败时用户仍有入口)
+        View btnSearch = findViewById(R.id.btnSearch);
+        if (btnSearch != null) btnSearch.setOnClickListener(v -> {
+            String q = searchBox.getText() == null ? "" : searchBox.getText().toString();
+            lastQuery = q.trim();
+            runSearch(lastQuery);
+            searchBox.clearFocus();
+        });
 
         // ── 绑定结果区 ──
         resultCount = findViewById(R.id.resultCount);

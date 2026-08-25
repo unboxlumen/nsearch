@@ -53,10 +53,13 @@
                     android:paddingBottom="8dp">
 
                     <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
+                        android:id="@+id/btnSearch"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:padding="4dp"
                         android:src="@drawable/ic_search"
-                        android:importantForAccessibility="no" />
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/advanced_search" />
 
                     <EditText
                         android:id="@+id/searchBox"
@@ -65,9 +68,10 @@
                         android:layout_weight="1"
                         android:background="@null"
                         android:hint="@string/search_hint"
-                        android:imeOptions="actionSearch"
+                        android:imeOptions="actionSearch|flagNoExtractUi|flagNoFullscreen"
                         android:inputType="text"
                         android:maxLines="1"
+                        android:singleLine="true"
                         android:paddingStart="8dp"
                         android:paddingEnd="8dp"
                         android:textSize="15sp"

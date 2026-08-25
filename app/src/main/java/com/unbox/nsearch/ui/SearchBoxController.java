@@ -3,7 +3,9 @@ package com.unbox.nsearch.ui;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 
@@ -64,10 +66,29 @@ public final class SearchBoxController {
     }
 
     private void bind() {
+        // 软键盘「搜索」键(actionSearch):这条路径在大多数 IME 下都正常触发。
         searchBox.setOnEditorActionListener((v, actionId, event) -> {
-            handler.removeCallbacks(debounceTask);
-            listener.onQueryChanged(currentQuery);
-            return true;
+            if (actionId == EditorInfo.IME_ACTION_SEARCH
+                    || actionId == EditorInfo.IME_ACTION_DONE
+                    || actionId == EditorInfo.IME_ACTION_GO
+                    || actionId == EditorInfo.IME_ACTION_NEXT
+                    || actionId == EditorInfo.IME_ACTION_SEND
+                    || actionId == EditorInfo.IME_NULL /* 物理回车 */) {
+                triggerSearchNow();
+                return true;
+            }
+            return false;
+        });
+        // 物理键盘 / 某些输入法把回车作为普通 KEY_EVENT 而不是 IME_ACTION_SEARCH,
+        // 需要单独监听 KEYCODE_ENTER 才能保证「按回车立刻搜索」。
+        searchBox.setOnKeyListener((v, keyCode, event) -> {
+            if (event.getAction() == KeyEvent.ACTION_DOWN
+                    && (keyCode == KeyEvent.KEYCODE_ENTER
+                    || keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)) {
+                triggerSearchNow();
+                return true;
+            }
+            return false;
         });
         searchBox.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
@@ -84,5 +105,18 @@ public final class SearchBoxController {
             setQuery("");
             submitImmediate();
         });
+    }
+
+    /**
+     * 立即触发一次搜索:取消 debounce、回调监听器、把焦点和键盘一并隐藏,
+     * 避免用户连续按回车导致 onQueryChanged 被反复回调时只看到最后一次。
+     */
+    private void triggerSearchNow() {
+        handler.removeCallbacks(debounceTask);
+        // 先 commit 文本,确保 currentQuery 是最终值
+        Editable e = searchBox.getText();
+        currentQuery = e == null ? "" : e.toString();
+        listener.onQueryChanged(currentQuery);
+        searchBox.clearFocus();
     }
 }
