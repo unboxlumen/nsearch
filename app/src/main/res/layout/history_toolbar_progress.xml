@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:gravity="center"
+    android:contentDescription="@string/cd_history_progress">
+
+    <!-- 活跃态:圆环 + 百分比 -->
+    <FrameLayout
+        android:id="@+id/activeGroup"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="gone">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/ring"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:indeterminate="false"
+            app:indicatorSize="28dp"
+            app:trackThickness="3dp"
+            app:indicatorInset="0dp"
+            app:indicatorColor="?attr/colorPrimary"
+            app:trackColor="?attr/colorOutline" />
+
+        <TextView
+            android:id="@+id/ringPct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="0%"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary" />
+    </FrameLayout>
+
+    <!-- 空闲态:历史记录 icon -->
+    <ImageView
+        android:id="@+id/idleIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_history"
+        android:importantForAccessibility="no"
+        app:tint="?android:attr/textColorPrimary" />
+
+</FrameLayout>
