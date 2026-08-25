@@ -1,6 +1,7 @@
 package com.unbox.nsearch.index;
 
 import android.content.Context;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
@@ -49,6 +50,15 @@ public final class IndexPipeline {
     /** 暂停时 wait 的间隔；用于取消检查。 */
     @VisibleForTesting
     static final long PAUSE_POLL_MS = 200;
+    /** 「前 100 个文件」区间内每多少个 toast 一次。 */
+    @VisibleForTesting
+    static final int TOAST_EARLY = 50;
+    /** 「前 100 个文件」区间长度,超过这个区间后改用 {@link #TOAST_LATE} 频率。 */
+    @VisibleForTesting
+    static final int TOAST_EARLY_RANGE = 100;
+    /** 越过早区间后,每多少个文件 toast 一次。 */
+    @VisibleForTesting
+    static final int TOAST_LATE = 500;
 
     private final Context appCtx;
     private final IndexController.State state;
@@ -84,16 +94,31 @@ public final class IndexPipeline {
         FileMetaDao fileDao = db.fileMeta();
 
         resetState(start);
+        // 立刻 toast 一次「扫描中」,让用户知道已收到请求
+        toast("开始扫描…");
 
-        List<FileScanner.ScanItem> items = safeScan(settings);
+        // 扫描期间按节流策略 toast:每 200 个文件 / 每 1 秒一次
+        final long[] lastScanToastMs = {0L};
+        final int[] lastScanToastCount = {0};
+        java.util.function.Consumer<Integer> scanProgress = count -> {
+            long now = System.currentTimeMillis();
+            if (count - lastScanToastCount[0] >= 200 || now - lastScanToastMs[0] >= 1000) {
+                lastScanToastCount[0] = count;
+                lastScanToastMs[0] = now;
+                toast("扫描中…已发现 " + count + " 个候选文件");
+            }
+        };
+        List<FileScanner.ScanItem> items = safeScan(settings, scanProgress);
         synchronized (state) {
             state.total = items.size();
         }
         notifier.notifyProgress(state);
+        toast("扫描完成,共 " + items.size() + " 个候选文件,开始索引");
 
         int indexed = 0;
         int skipped = 0;
         int failed = 0;
+        final int[] lastToastAt = {0}; // 上一次 toast 时的 indexed 数
 
         LuceneManager km = null;
         IncrementalSync sync = null;
@@ -118,6 +143,7 @@ public final class IndexPipeline {
                     }
                     skipped++;
                     notifier.notifyProgress(state);
+                    maybeToastByCount(state.indexed, lastToastAt);
                     continue;
                 }
 
@@ -139,6 +165,7 @@ public final class IndexPipeline {
                 if (state.indexed % NOTIFY_EVERY == 0) {
                     notifier.notifyProgress(state);
                 }
+                maybeToastByCount(state.indexed, lastToastAt);
             }
 
             if (km != null) {
@@ -177,6 +204,37 @@ public final class IndexPipeline {
             return new ScanRecord(start, end, items.size(),
                     indexedForHistory, state.failed, skipped,
                     end - start, "manual");
+        }
+    }
+
+    /**
+     * 根据当前已处理文件数按「前 100 个每 50 个、之后每 500 个」的策略决定是否 toast。
+     * 每次 toast 后更新 {@code lastToastAt[0]}。
+     */
+    private void maybeToastByCount(int currentIndexed, int[] lastToastAt) {
+        int last = lastToastAt[0];
+        if (currentIndexed <= TOAST_EARLY_RANGE) {
+            // 前 100 个:每 50 个 toast,但要在到达时 toast(50, 100)
+            if (currentIndexed > 0 && currentIndexed % TOAST_EARLY == 0 && currentIndexed != last) {
+                toast("已索引 " + currentIndexed + " 个");
+                lastToastAt[0] = currentIndexed;
+            }
+        } else {
+            // 越过 100 后:每 500 个 toast,但要比 lastToastAt 多 TOAST_LATE 个
+            if (currentIndexed - last >= TOAST_LATE) {
+                toast("已索引 " + currentIndexed + " 个");
+                lastToastAt[0] = currentIndexed;
+            }
+        }
+    }
+
+    /**
+     * 跨线程安全的 toast 入口:Toast.makeText 自己 post 到主线程。
+     */
+    private void toast(String msg) {
+        try {
+            Toast.makeText(appCtx, msg, Toast.LENGTH_SHORT).show();
+        } catch (Throwable ignored) {
         }
     }
 
@@ -229,9 +287,10 @@ public final class IndexPipeline {
         notifier.notifyStatus(state);
     }
 
-    private List<FileScanner.ScanItem> safeScan(@NonNull Settings settings) {
+    private List<FileScanner.ScanItem> safeScan(@NonNull Settings settings,
+                                                  @NonNull java.util.function.Consumer<Integer> onProgress) {
         try {
-            return FileScanner.scan(appCtx, settings);
+            return FileScanner.scan(appCtx, settings, onProgress);
         } catch (Throwable t) {
             ErrorReporter.report("IndexPipeline.safeScan", t);
             return new ArrayList<>();

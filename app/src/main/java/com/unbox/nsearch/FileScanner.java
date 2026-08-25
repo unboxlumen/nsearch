@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * 扫描待索引文件。
@@ -55,13 +56,23 @@ public final class FileScanner {
     }
 
     public static List<ScanItem> scan(Context context, Settings settings) {
+        return scan(context, settings, null);
+    }
+
+    /**
+     * 扫描文件,期间通过 {@code onProgress} 回调通知已发现的文件数。
+     * {@code onProgress} 可为 null(等同于 {@link #scan(Context, Settings)})。
+     * 回调在调用线程上执行,频率与每个目录的子节点遍历粒度相关,
+     * Pipeline 应对回调做节流(例如「每 N 次才触发一次 toast」)。
+     */
+    public static List<ScanItem> scan(Context context, Settings settings, Consumer<Integer> onProgress) {
         Set<String> enabled = settings.getEnabledTypes();
         List<ScanItem> items = new ArrayList<>();
         // 主外部存储
         try {
             File root = Environment.getExternalStorageDirectory();
             if (root != null && root.isDirectory()) {
-                walkFile(root, enabled, items, 0);
+                walkFile(root, enabled, items, 0, onProgress);
             }
         } catch (Throwable ignored) {
         }
@@ -71,15 +82,17 @@ public final class FileScanner {
                 Uri uri = Uri.parse(uriStr);
                 DocumentFile tree = DocumentFile.fromTreeUri(context, uri);
                 if (tree != null && tree.exists()) {
-                    walkDocument(context, tree, enabled, items, 0);
+                    walkDocument(context, tree, enabled, items, 0, onProgress);
                 }
             } catch (Throwable ignored) {
             }
         }
+        if (onProgress != null) onProgress.accept(items.size());
         return items;
     }
 
-    private static void walkFile(File dir, Set<String> enabled, List<ScanItem> out, int depth) {
+    private static void walkFile(File dir, Set<String> enabled, List<ScanItem> out, int depth,
+                                  Consumer<Integer> onProgress) {
         if (depth > 32) return;
         File[] children = dir.listFiles();
         if (children == null) return;
@@ -88,18 +101,20 @@ public final class FileScanner {
             if (f.isDirectory()) {
                 String lower = f.getName().toLowerCase(Locale.ROOT);
                 if (SKIP_DIRS.contains(lower)) continue;
-                walkFile(f, enabled, out, depth + 1);
+                walkFile(f, enabled, out, depth + 1, onProgress);
             } else if (f.isFile()) {
                 FileType t = FileType.match(f.getName());
                 if (t != null && t.isEnabled(enabled)) {
                     out.add(new FileScanItem(f, t.ext));
+                    if (onProgress != null) onProgress.accept(out.size());
                 }
             }
         }
     }
 
     private static void walkDocument(Context ctx, DocumentFile dir, Set<String> enabled,
-                                      List<ScanItem> out, int depth) {
+                                      List<ScanItem> out, int depth,
+                                      Consumer<Integer> onProgress) {
         if (depth > 32) return;
         DocumentFile[] children = dir.listFiles();
         if (children == null) return;
@@ -110,11 +125,12 @@ public final class FileScanner {
             if (f.isDirectory()) {
                 String lower = (name == null ? "" : name.toLowerCase(Locale.ROOT));
                 if (SKIP_DIRS.contains(lower)) continue;
-                walkDocument(ctx, f, enabled, out, depth + 1);
+                walkDocument(ctx, f, enabled, out, depth + 1, onProgress);
             } else if (f.isFile()) {
                 FileType t = FileType.match(name);
                 if (t != null && t.isEnabled(enabled)) {
                     out.add(new DocumentScanItem(f, t.ext));
+                    if (onProgress != null) onProgress.accept(out.size());
                 }
             }
         }
