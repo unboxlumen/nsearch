@@ -7,6 +7,7 @@
         app:iconSpaceReserved="false">
 
         <ListPreference
+            app:iconSpaceReserved="false"
             android:key="search_mode"
             android:title="@string/settings_default_mode"
             android:summary="%s"
@@ -15,6 +16,7 @@
             android:defaultValue="medium" />
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:key="synonym_enabled"
             android:title="@string/settings_synonym"
             android:summary="@string/settings_synonym_summary"
@@ -27,6 +29,7 @@
         app:iconSpaceReserved="false">
 
         <MultiSelectListPreference
+            app:iconSpaceReserved="false"
             android:key="file_types"
             android:title="@string/settings_file_types"
             android:summary="@string/settings_file_types"
@@ -40,6 +43,7 @@
         app:iconSpaceReserved="false">
 
         <ListPreference
+            app:iconSpaceReserved="false"
             android:key="char_limit"
             android:title="@string/settings_char_limit"
             android:summary="%s"
@@ -54,6 +58,7 @@
         app:iconSpaceReserved="false">
 
         <Preference
+            app:iconSpaceReserved="false"
             android:key="add_folder"
             android:title="@string/add_folder" />
 
@@ -64,18 +69,22 @@
         app:iconSpaceReserved="false">
 
         <Preference
+            app:iconSpaceReserved="false"
             android:key="trigger_index"
             android:title="@string/trigger_index" />
 
         <Preference
+            app:iconSpaceReserved="false"
             android:key="delete_index"
             android:title="@string/delete_index" />
 
         <Preference
+            app:iconSpaceReserved="false"
             android:key="scan_history"
             android:title="@string/scan_history" />
 
         <Preference
+            app:iconSpaceReserved="false"
             android:key="clear_history"
             android:title="@string/clear_history" />
 
@@ -86,6 +95,7 @@
         app:iconSpaceReserved="false">
 
         <Preference
+            app:iconSpaceReserved="false"
             android:key="about_version"
             android:title="@string/about"
             android:summary="@string/version" />

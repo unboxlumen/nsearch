@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="?attr/materialCardViewStyle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:clickable="true"
@@ -29,7 +30,6 @@
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/ic_file"
-                app:tint="?attr/colorPrimary"
                 android:importantForAccessibility="no" />
 
             <!-- 文件名（主标题） -->
@@ -48,12 +48,10 @@
             <!-- 打开按钮 -->
             <ImageButton
                 android:id="@+id/resultOpen"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:src="@drawable/ic_open"
-                app:tint="?android:attr/textColorSecondary"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="6dp"
                 android:contentDescription="@string/open_file" />
         </LinearLayout>
 

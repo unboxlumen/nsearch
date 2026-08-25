@@ -92,4 +92,10 @@
     <string name="confirm">确认</string>
     <string name="snippet_unavailable">暂无预览。</string>
     <string name="indexing_in_progress">索引进行中…</string>
+    <string name="toast_index_started">已开始索引</string>
+    <string name="toast_index_already_running">索引正在运行</string>
+    <string name="toast_index_paused_resumed">已继续</string>
+    <string name="toast_index_paused">已暂停</string>
+    <string name="toolbar_idle_badge">%1$d</string>
+    <string name="cd_idle_badge">已索引文件数。点击重新索引。</string>
 </resources>

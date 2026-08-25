@@ -102,7 +102,15 @@ public final class IndexController {
 
     public void requestStart() {
         synchronized (state) {
+            // 只有真正在跑时才拒绝;PAUSED 视为仍占用旧 pipeline 的循环,
+            // 强制先取消以避免新旧两轮并发索引。
             if (state.status == Status.RUNNING) return;
+        }
+        if (state.status == Status.PAUSED) {
+            // 唤醒旧的 wait,让它下一轮检测到 cancelled 退出
+            cancel();
+            // 等旧 pipeline 退出再启动新的;executor 是单线程,execute 会排队。
+            // 这里不再重置 state.status,留给 IndexPipeline.run() 的 resetState() 统一处理。
         }
         cancelled.set(false);
         paused.set(false);

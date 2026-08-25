@@ -45,8 +45,13 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         Preference trigger = findPreference("trigger_index");
         if (trigger != null) trigger.setOnPreferenceClickListener(p -> {
-            controller.requestStart();
-            Toast.makeText(getContext(), R.string.btn_index_now, Toast.LENGTH_SHORT).show();
+            IndexController.State s = controller.getState();
+            if (s.status == IndexController.Status.RUNNING) {
+                Toast.makeText(getContext(), R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
+            } else {
+                controller.requestStart();
+                Toast.makeText(getContext(), R.string.toast_index_started, Toast.LENGTH_SHORT).show();
+            }
             return true;
         });
 

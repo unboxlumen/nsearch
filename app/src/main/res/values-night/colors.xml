@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 暗色模式覆盖：同名资源，由 DayNight 主题在夜间自动选用（见 UI_DESIGN_GUIDE.md §8）。
+         背景/表面压暗、文字提亮、描边收敛，避免「能看但刺眼」的简单反色。 -->
+    <color name="bg_day">#121212</color>
+    <color name="surface_day">#1E1E1E</color>
+    <color name="text_day">#FAFAFA</color>
+    <color name="text_secondary_day">#9AA0A6</color>
+    <color name="outline_day">#2C2C2E</color>
+</resources>

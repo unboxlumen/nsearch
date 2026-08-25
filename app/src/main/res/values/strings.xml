@@ -91,4 +91,13 @@
     <string name="confirm">Confirm</string>
     <string name="snippet_unavailable">No preview available.</string>
     <string name="indexing_in_progress">Indexing is in progress…</string>
+    <string name="search_failed">Search failed</string>
+    <string name="search_index_error">Couldn\'t read the search index.\nRebuild it, then retry the search.</string>
+    <string name="retry">Retry</string>
+    <string name="toast_index_started">Indexing started</string>
+    <string name="toast_index_already_running">Indexing is already running</string>
+    <string name="toast_index_paused_resumed">Resumed</string>
+    <string name="toast_index_paused">Paused</string>
+    <string name="toolbar_idle_badge">%1$d</string>
+    <string name="cd_idle_badge">Indexed files. Tap to reindex.</string>
 </resources>

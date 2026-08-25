@@ -17,7 +17,7 @@
 
         <!-- 状态栏：与工具栏同色（白底），深色文字，避免白底白字看不见 -->
         <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">@bool/config_lightStatusBar</item>
 
         <item name="android:textColorPrimary">@color/text_day</item>
         <item name="android:textColorSecondary">@color/text_secondary_day</item>

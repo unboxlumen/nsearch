@@ -5,26 +5,52 @@
     android:layout_height="48dp"
     android:gravity="center">
 
-    <com.google.android.material.progressindicator.CircularProgressIndicator
-        android:id="@+id/ring"
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_gravity="center"
-        android:indeterminate="false"
-        app:indicatorSize="28dp"
-        app:trackThickness="3dp"
-        app:indicatorInset="0dp"
-        app:indicatorColor="?attr/colorPrimary"
-        app:trackColor="?attr/colorOutline" />
+    <!-- 活跃态:进度环 + 百分比 -->
+    <FrameLayout
+        android:id="@+id/activeGroup"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:visibility="gone">
 
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/ring"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:indeterminate="false"
+            app:indicatorSize="28dp"
+            app:trackThickness="3dp"
+            app:indicatorInset="0dp"
+            app:indicatorColor="?attr/colorPrimary"
+            app:trackColor="?attr/colorOutline" />
+
+        <TextView
+            android:id="@+id/ringPct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="0%"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary" />
+    </FrameLayout>
+
+    <!-- 空闲态:已索引 N 个文件 徽章 -->
     <TextView
-        android:id="@+id/ringPct"
+        android:id="@+id/idleBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="0%"
-        android:textSize="9sp"
+        android:minWidth="40dp"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:background="@drawable/bg_idle_badge"
+        android:textSize="11sp"
         android:textStyle="bold"
-        android:textColor="?android:attr/textColorPrimary" />
+        android:textColor="?attr/colorPrimary"
+        android:contentDescription="@string/cd_idle_badge" />
 
 </FrameLayout>

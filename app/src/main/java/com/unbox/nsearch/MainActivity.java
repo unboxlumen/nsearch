@@ -62,6 +62,9 @@ public class MainActivity extends AppCompatActivity
     // ═══ 结果区视图 ═══
     private TextView resultCount;
     private TextView emptyView;
+    private View errorView;
+    private View btnRetry;
+    private RecyclerView results;
 
     // ═══ 业务子控制器 ═══
     private SearchBoxController searchBoxController;
@@ -90,9 +93,12 @@ public class MainActivity extends AppCompatActivity
         // ── 绑定结果区 ──
         resultCount = findViewById(R.id.resultCount);
         emptyView = findViewById(R.id.emptyView);
+        errorView = findViewById(R.id.errorView);
+        btnRetry = findViewById(R.id.btnRetry);
+        btnRetry.setOnClickListener(v -> retrySearch());
 
         // ── 结果列表 ──
-        RecyclerView results = findViewById(R.id.results);
+        results = findViewById(R.id.results);
         results.setLayoutManager(new LinearLayoutManager(this));
         results.addItemDecoration(new SpaceItemDecoration(8, 0, this));
         adapter = new SearchResultAdapter(this);
@@ -111,16 +117,10 @@ public class MainActivity extends AppCompatActivity
 
         searchBoxController = new SearchBoxController(searchBox, btnClear, this::runSearch);
 
-        // progressCard 在 onCreateOptionsMenu 中绑定到工具栏 ring / action 视图,
-        // 但它本身也可独立工作(无 ring 时退化)。
-        progressCard = new IndexProgressCard(
-                findViewById(android.R.id.content),
-                /* indexProgressAction */ null,
-                /* ring */ null,
-                /* ringPct */ null,
-                resultCount,
-                this::togglePause,
-                this::indexedInfo);
+        // progressCard 需要绑定工具栏上的 ring / action 视图,
+        // 而菜单是在 onCreateOptionsMenu 才 inflate 的,这里先保留 null,
+        // 等 onCreateOptionsMenu 真正构造 progressCard,再由 onStart 注册 listener。
+        progressCard = null;
 
         btnAdvanced.setOnClickListener(v -> AdvancedSearchSheet.show(this, settings,
                 (mode, synonym) -> {
@@ -140,19 +140,44 @@ public class MainActivity extends AppCompatActivity
             ring = indexProgressAction.findViewById(R.id.ring);
             ringPct = indexProgressAction.findViewById(R.id.ringPct);
             indexProgressAction.setVisibility(View.GONE);
-            indexProgressAction.setOnClickListener(v -> toggleIndexDetail());
+            // 点击活跃态(进度环):展开/收起详情卡
+            // 点击空闲态(已索引 N 徽章):直接请求索引
+            indexProgressAction.setOnClickListener(v -> {
+                IndexController.State s = controller.getState();
+                boolean active = s.status == IndexController.Status.RUNNING
+                        || s.status == IndexController.Status.PAUSED;
+                if (active) {
+                    toggleIndexDetail();
+                } else {
+                    requestIndexFromToolbar();
+                }
+            });
             indexMenuItem.setVisible(true);
             indexProgressMenuItem.setVisible(false);
         }
-        // 重新构造一个绑定了 ring 的 progressCard,替换之前的空 ring 版本
-        progressCard = new IndexProgressCard(
+        // 真正构造 progressCard（此时已能拿到工具栏上的 ring / action 视图）。
+        // 之前 onCreate 里的占位构造已移除，避免出现"幽灵 listener + 真实 UI"对不上。
+        IndexProgressCard newCard = new IndexProgressCard(
                 findViewById(android.R.id.content),
                 indexProgressAction,
                 ring,
                 ringPct,
                 resultCount,
-                this::togglePause,
-                this::indexedInfo);
+                new IndexProgressCard.Listener() {
+                    @Override public void onTogglePause() { togglePause(); }
+                    @Override public void onCancel() { cancelIndex(); }
+                },
+                new IndexProgressCard.ResultCountFormatter() {
+                    @NonNull @Override public String formatIdle() { return indexedInfo(); }
+                    @Override public int formatIdleCount() { return indexedFileCount(); }
+                });
+        // 若 Activity 已 started,新 progressCard 需立即注册,否则收不到首屏状态。
+        boolean started = (getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED));
+        if (started) {
+            if (progressCard != null) controller.removeListener(progressCard);
+            controller.addListener(newCard);
+        }
+        progressCard = newCard;
         return true;
     }
 
@@ -169,13 +194,22 @@ public class MainActivity extends AppCompatActivity
         }
         final String q = lastQuery;
         SearchExecutor.get().submit(() -> {
-            List<SearchResult> res = SearchEngine.search(MainActivity.this, km, q, settings, 200);
-            SearchExecutor.get().postToMain(() -> showResults(res, q));
+            try {
+                List<SearchResult> res = SearchEngine.search(MainActivity.this, km, q, settings, 200);
+                SearchExecutor.get().postToMain(() -> showResults(res, q));
+            } catch (Exception e) {
+                SearchExecutor.get().postToMain(() -> {
+                    resultCount.setText(R.string.search_failed);
+                    showError();
+                });
+            }
         });
     }
 
     private void showResults(@NonNull List<SearchResult> res, @NonNull String q) {
         if (q.equals(lastQuery)) {
+            results.setVisibility(View.VISIBLE);
+            errorView.setVisibility(View.GONE);
             adapter.setItems(res);
             if (res.isEmpty()) {
                 resultCount.setText(R.string.empty_results);
@@ -189,9 +223,32 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void updateIdleView() {
+        errorView.setVisibility(View.GONE);
+        results.setVisibility(View.VISIBLE);
         emptyView.setVisibility(View.VISIBLE);
         emptyView.setText(R.string.empty_hint);
         resultCount.setText(indexedInfo());
+    }
+
+    // ---------------- 错误态（索引损坏 / 搜索失败，可重试） ----------------
+
+    private void showError() {
+        results.setVisibility(View.GONE);
+        emptyView.setVisibility(View.GONE);
+        errorView.setVisibility(View.VISIBLE);
+    }
+
+    private void hideError() {
+        errorView.setVisibility(View.GONE);
+    }
+
+    private void retrySearch() {
+        hideError();
+        if (lastQuery.isEmpty()) {
+            updateIdleView();
+        } else {
+            runSearch(lastQuery);
+        }
     }
 
     @NonNull
@@ -200,15 +257,40 @@ public class MainActivity extends AppCompatActivity
         return getString(R.string.files_total, n);
     }
 
+    private int indexedFileCount() {
+        return (km != null) ? km.docCount() : IndexDatabase.get(this).countDone();
+    }
+
     // ---------------- 索引控制 ----------------
 
     private void togglePause() {
-        if (controller.isPaused()) controller.resume();
-        else controller.pause();
+        if (controller.isPaused()) {
+            controller.resume();
+            Toast.makeText(this, R.string.toast_index_paused_resumed, Toast.LENGTH_SHORT).show();
+        } else {
+            controller.pause();
+            Toast.makeText(this, R.string.toast_index_paused, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void toggleIndexDetail() {
         progressCard.toggleDetail();
+    }
+
+    private void requestIndexFromToolbar() {
+        if (controller.getState().status == IndexController.Status.RUNNING) {
+            Toast.makeText(this, R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
+        } else {
+            permissionHelper.request();
+        }
+    }
+
+    private void cancelIndex() {
+        IndexController.State s = controller.getState();
+        if (s.status == IndexController.Status.RUNNING || s.status == IndexController.Status.PAUSED) {
+            controller.cancel();
+            Toast.makeText(this, R.string.index_cancelled, Toast.LENGTH_SHORT).show();
+        }
     }
 
     // ---------------- 菜单 ----------------
@@ -217,7 +299,11 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_index) {
-            permissionHelper.request();
+            if (controller.getState().status == IndexController.Status.RUNNING) {
+                Toast.makeText(this, R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
+            } else {
+                permissionHelper.request();
+            }
             return true;
         } else if (id == R.id.action_history) {
             startActivity(new Intent(this, HistoryActivity.class));
@@ -271,13 +357,13 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
-        controller.addListener(progressCard);
+        if (progressCard != null) controller.addListener(progressCard);
         resultCount.setText(indexedInfo());
     }
 
     @Override
     protected void onStop() {
-        controller.removeListener(progressCard);
+        if (progressCard != null) controller.removeListener(progressCard);
         super.onStop();
     }
 }

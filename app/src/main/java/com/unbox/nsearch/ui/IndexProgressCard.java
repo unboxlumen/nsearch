@@ -18,6 +18,7 @@ import com.unbox.nsearch.R;
  * <p>负责把 {@link IndexController.State} 翻译成：
  *  - 详情卡内的进度条 / 统计行 / 当前文件行 / 暂停按钮文案；
  *  - 工具栏进度环的百分比文字；
+ *  - 工具栏空闲态徽章「已索引 N」；
  *  - 详情卡的显隐（仅在运行中显示）。
  *
  * <p>pause/resume 动作通过 {@link Listener} 回调给宿主 Activity，避免本类反向依赖 Controller。
@@ -26,6 +27,7 @@ public final class IndexProgressCard implements IndexController.Listener {
 
     public interface Listener {
         void onTogglePause();
+        void onCancel();
     }
 
     private final View progressCard;
@@ -35,10 +37,13 @@ public final class IndexProgressCard implements IndexController.Listener {
     private final TextView progressTitle;
     private final TextView resultCount;
     private final MaterialButton btnPauseResume;
+    private final MaterialButton btnCancel;
 
     @Nullable private final CircularProgressIndicator ring;
     @Nullable private final TextView ringPct;
     @Nullable private final View indexProgressAction;
+    @Nullable private final View activeGroup;
+    @Nullable private final TextView idleBadge;
 
     private final Listener listener;
     private final ResultCountFormatter resultCountFormatter;
@@ -56,6 +61,7 @@ public final class IndexProgressCard implements IndexController.Listener {
         this.progressCurrent = root.findViewById(R.id.progressCurrent);
         this.progressTitle = root.findViewById(R.id.progressTitle);
         this.btnPauseResume = root.findViewById(R.id.btnPauseResume);
+        this.btnCancel = root.findViewById(R.id.btnCancel);
         this.resultCount = resultCount;
         this.indexProgressAction = indexProgressAction;
         this.ring = ring;
@@ -63,7 +69,19 @@ public final class IndexProgressCard implements IndexController.Listener {
         this.listener = listener;
         this.resultCountFormatter = formatter;
 
+        // 空闲态徽章与活跃态容器,与 indexProgressAction 同级
+        if (indexProgressAction != null) {
+            this.activeGroup = indexProgressAction.findViewById(R.id.activeGroup);
+            this.idleBadge = indexProgressAction.findViewById(R.id.idleBadge);
+        } else {
+            this.activeGroup = null;
+            this.idleBadge = null;
+        }
+
         btnPauseResume.setOnClickListener(v -> listener.onTogglePause());
+        if (btnCancel != null) {
+            btnCancel.setOnClickListener(v -> listener.onCancel());
+        }
     }
 
     /**
@@ -85,6 +103,11 @@ public final class IndexProgressCard implements IndexController.Listener {
         if (ring != null) ring.setProgress(pct);
         if (ringPct != null) ringPct.setText(pct + "%");
         if (s.status != IndexController.Status.RUNNING && s.status != IndexController.Status.PAUSED) {
+            // 索引结束后刷新空闲徽章显示最新总数
+            if (idleBadge != null) {
+                int n = resultCountFormatter.formatIdleCount();
+                idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, n));
+            }
             resultCount.setText(resultCountFormatter.formatIdle());
         }
     }
@@ -96,14 +119,24 @@ public final class IndexProgressCard implements IndexController.Listener {
         btnPauseResume.setText(active && s.status == IndexController.Status.PAUSED
                 ? R.string.btn_resume : R.string.btn_pause);
         if (!active) {
+            // 空闲态:刷新徽章,关闭详情卡
+            if (idleBadge != null) {
+                int n = resultCountFormatter.formatIdleCount();
+                idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, n));
+            }
             progressCard.setVisibility(View.GONE);
             resultCount.setText(resultCountFormatter.formatIdle());
         }
     }
 
     private void applyActiveState(boolean active) {
-        if (indexProgressAction != null) {
-            indexProgressAction.setVisibility(active ? View.VISIBLE : View.GONE);
+        if (indexProgressAction == null) return;
+        indexProgressAction.setVisibility(View.VISIBLE);
+        if (activeGroup != null) {
+            activeGroup.setVisibility(active ? View.VISIBLE : View.GONE);
+        }
+        if (idleBadge != null) {
+            idleBadge.setVisibility(active ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -117,5 +150,6 @@ public final class IndexProgressCard implements IndexController.Listener {
      */
     public interface ResultCountFormatter {
         @NonNull String formatIdle();
+        int formatIdleCount();
     }
 }

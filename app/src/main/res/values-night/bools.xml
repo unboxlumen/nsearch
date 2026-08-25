@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 夜间：状态栏用深色文字（暗底深字），避免浅字叠暗底看不见 -->
+    <bool name="config_lightStatusBar">false</bool>
+</resources>
