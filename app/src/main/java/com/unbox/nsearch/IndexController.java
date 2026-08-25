@@ -3,6 +3,7 @@ package com.unbox.nsearch;
 import android.content.Context;
 import android.content.Intent;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.content.ContextCompat;
 
@@ -80,6 +81,21 @@ public final class IndexController {
 
     public State getState() {
         return state;
+    }
+
+    /**
+     * 把当前 {@link State} 拍成一行可读字符串,便于 UI 层直接 toast 显示状态。
+     * 线程安全:对 {@link State} 各字段的读取是单线程串行化(主线程读 / executor 线程写),
+     * 即使有可见性延迟也只影响"看到的瞬时快照",不影响功能正确性。
+     */
+    @NonNull
+    public String debugSnapshot() {
+        State s = state;
+        return s.status.name()
+                + " · indexed " + s.indexed + "/" + s.total
+                + " · skipped " + s.skipped
+                + " · failed " + s.failed
+                + (s.currentFile == null || s.currentFile.isEmpty() ? "" : " · " + s.currentFile);
     }
 
     public void addListener(Listener l) {

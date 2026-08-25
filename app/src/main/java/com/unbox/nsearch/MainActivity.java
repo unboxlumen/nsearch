@@ -143,6 +143,8 @@ public class MainActivity extends AppCompatActivity
             // 点击活跃态(进度环):展开/收起详情卡
             // 点击空闲态(已索引 N 徽章):直接请求索引
             indexProgressAction.setOnClickListener(v -> {
+                // 先 toast 出当前状态,便于调试和确认流程
+                Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
                 IndexController.State s = controller.getState();
                 boolean active = s.status == IndexController.Status.RUNNING
                         || s.status == IndexController.Status.PAUSED;
@@ -271,6 +273,8 @@ public class MainActivity extends AppCompatActivity
             controller.pause();
             Toast.makeText(this, R.string.toast_index_paused, Toast.LENGTH_SHORT).show();
         }
+        // 再 toast 一次当前状态作为确认
+        Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
     }
 
     private void toggleIndexDetail() {
@@ -291,6 +295,8 @@ public class MainActivity extends AppCompatActivity
             controller.cancel();
             Toast.makeText(this, R.string.index_cancelled, Toast.LENGTH_SHORT).show();
         }
+        // 再 toast 一次当前状态作为确认
+        Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
     }
 
     // ---------------- 菜单 ----------------
@@ -299,6 +305,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_index) {
+            Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
             if (controller.getState().status == IndexController.Status.RUNNING) {
                 Toast.makeText(this, R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
             } else {
@@ -335,6 +342,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onGranted() {
         controller.requestStart();
+        Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
     }
 
     @Override

@@ -46,6 +46,8 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         Preference trigger = findPreference("trigger_index");
         if (trigger != null) trigger.setOnPreferenceClickListener(p -> {
             IndexController.State s = controller.getState();
+            // 先 toast 一次当前状态作为点击反馈
+            Toast.makeText(getContext(), controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
             if (s.status == IndexController.Status.RUNNING) {
                 Toast.makeText(getContext(), R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
             } else {
