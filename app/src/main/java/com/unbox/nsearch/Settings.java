@@ -3,6 +3,8 @@ package com.unbox.nsearch;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import androidx.annotation.NonNull;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -23,6 +25,15 @@ public final class Settings {
 
     public enum SearchMode {
         STRICT, MEDIUM, LOOSE;
+
+        /** SharedPreferences 中持久化的小写字符串；集中在此,避免 UI 层硬编码。 */
+        public String prefValue() {
+            switch (this) {
+                case STRICT: return "strict";
+                case LOOSE: return "loose";
+                default: return "medium";
+            }
+        }
 
         /**
          * 把 SharedPreferences 字符串还原为枚举。
@@ -57,7 +68,11 @@ public final class Settings {
     }
 
     public SearchMode getSearchMode() {
-        return SearchMode.parse(prefs.getString(KEY_MODE, "medium"));
+        return SearchMode.parse(prefs.getString(KEY_MODE, SearchMode.MEDIUM.prefValue()));
+    }
+
+    public void setSearchMode(@NonNull SearchMode mode) {
+        prefs.edit().putString(KEY_MODE, mode.prefValue()).apply();
     }
 
     public boolean isSynonymEnabled() {
@@ -100,6 +115,12 @@ public final class Settings {
         prefs.edit().remove(KEY_SCOPE_URIS).apply();
     }
 
+    /**
+     * {@code putString} 在重构中暴露了「任意 key → 任意 String」的破口
+     * (无法保证 value 合法、也无法被 IDE 重命名追踪)。
+     * 所有写操作请走强类型 setter（{@link #setSearchMode} / {@link #setSynonymEnabled} 等）。
+     */
+    @Deprecated
     public void putString(String key, String value) {
         prefs.edit().putString(key, value).apply();
     }

@@ -3,7 +3,6 @@ package com.unbox.nsearch.index;
 import androidx.annotation.NonNull;
 
 import com.unbox.nsearch.FileScanner;
-import com.unbox.nsearch.IndexController;
 import com.unbox.nsearch.LuceneManager;
 import com.unbox.nsearch.db.FileMetaDao;
 import com.unbox.nsearch.db.IndexDatabase;
@@ -17,7 +16,8 @@ import java.util.Set;
  *  - 给定本次扫描得到的 items，识别「未变更」（命中 size/modified 校验）→ 返回 true 表示可跳过；
  *  - 给定本次扫描完成后的 seen 集合，清理库中不在 seen 内（=已删除）的文件 → Lucene 与 DB 同步删除。
  *
- * 之前是 {@link IndexController#runIndex()} 内联的两段逻辑。
+ * 之前是 IndexController#runIndex() 内联的两段逻辑（注释不再保留 javadoc {@link} 引用,
+ * 避免 IncrementalSync 强依赖 IndexController）。
  * 抽出来后，主循环变成可读性更好的「scan → loop(item → indexOrSkip) → cleanup」。
  */
 public final class IncrementalSync {
@@ -40,6 +40,16 @@ public final class IncrementalSync {
      */
     public boolean isUnchanged(@NonNull FileScanner.ScanItem item) {
         FileMetaDao.FileRow row = fileDao.getRow(item.getPath());
+        return matches(row, item);
+    }
+
+    /**
+     * 纯函数判定：给定一条已持久化的行与一项扫描结果,返回「可跳过」判定。
+     *
+     * <p>从 {@link #isUnchanged(FileScanner.ScanItem)} 抽出,便于在 JVM 单测中覆盖各种边界(无 DB 也能跑)。
+     */
+    public static boolean matches(@androidx.annotation.Nullable FileMetaDao.FileRow row,
+                                  @NonNull FileScanner.ScanItem item) {
         if (row == null || row.status != IndexDatabase.STATUS_DONE) return false;
         if (row.size != item.length()) return false;
         if (item.lastModified() != 0 && row.modified != item.lastModified()) return false;
