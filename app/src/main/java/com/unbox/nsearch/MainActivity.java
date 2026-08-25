@@ -172,6 +172,15 @@ public class MainActivity extends AppCompatActivity
                 new IndexProgressCard.ResultCountFormatter() {
                     @NonNull @Override public String formatIdle() { return indexedInfo(); }
                     @Override public int formatIdleCount() { return indexedFileCount(); }
+                    @NonNull @Override public String formatActive(int indexed, int total, @Nullable String currentFile) {
+                        // 活跃态:实时显示「已索引 N / M · 当前文件:foo」
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(getString(R.string.index_active_count, indexed, total));
+                        if (currentFile != null && !currentFile.isEmpty()) {
+                            sb.append(" · ").append(currentFile);
+                        }
+                        return sb.toString();
+                    }
                 });
         // 若 Activity 已 started,新 progressCard 需立即注册,否则收不到首屏状态。
         boolean started = (getLifecycle().getCurrentState().isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED));

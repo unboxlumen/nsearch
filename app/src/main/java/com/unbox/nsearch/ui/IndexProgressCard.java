@@ -102,7 +102,13 @@ public final class IndexProgressCard implements IndexController.Listener {
         int pct = s.total > 0 ? (int) (s.indexed * 100L / s.total) : 0;
         if (ring != null) ring.setProgress(pct);
         if (ringPct != null) ringPct.setText(pct + "%");
-        if (s.status != IndexController.Status.RUNNING && s.status != IndexController.Status.PAUSED) {
+        boolean active = s.status == IndexController.Status.RUNNING
+                || s.status == IndexController.Status.PAUSED;
+        if (active) {
+            // 活跃态:resultCount 实时显示「已索引 N / M」+ 当前文件,
+            // 这样首页上"文件总数"后面的数字会一直变化,无需打开详情卡就能感知进度。
+            resultCount.setText(resultCountFormatter.formatActive(s.indexed, s.total, s.currentFile));
+        } else {
             // 索引结束后刷新空闲徽章显示最新总数
             if (idleBadge != null) {
                 int n = resultCountFormatter.formatIdleCount();
@@ -151,5 +157,10 @@ public final class IndexProgressCard implements IndexController.Listener {
     public interface ResultCountFormatter {
         @NonNull String formatIdle();
         int formatIdleCount();
+        /**
+         * 「活跃态」结果计数行格式化:实时显示已索引 / 候选总数 + 当前文件。
+         * 在每次 {@link #onProgress} 都被调用,因此实现应保持轻量,不要做 IO。
+         */
+        @NonNull String formatActive(int indexed, int total, @Nullable String currentFile);
     }
 }

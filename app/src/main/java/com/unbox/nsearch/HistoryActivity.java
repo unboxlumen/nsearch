@@ -5,6 +5,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -17,10 +18,11 @@ import com.unbox.nsearch.ui.SpaceItemDecoration;
 
 import java.util.List;
 
-public class HistoryActivity extends AppCompatActivity {
+public class HistoryActivity extends AppCompatActivity implements IndexController.Listener {
 
     private HistoryAdapter adapter;
     private TextView emptyView;
+    private IndexController controller;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +42,8 @@ public class HistoryActivity extends AppCompatActivity {
         adapter = new HistoryAdapter();
         list.setAdapter(adapter);
         emptyView = findViewById(R.id.emptyView);
+
+        controller = IndexController.get(this);
     }
 
     @Override
@@ -54,9 +58,35 @@ public class HistoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // 加载历史
         List<ScanRecord> records = IndexDatabase.get(this).getAllScanRecords();
         adapter.setItems(records);
-        emptyView.setVisibility(records.isEmpty() ? View.VISIBLE : View.GONE);
+        // 注册 controller 监听,这样首页运行中的索引能实时反映到这里
+        controller.addListener(this);
+        // 立刻推送一次当前状态,避免错过「正在运行」那条
+        adapter.updateRunning(controller.getState());
+        // 空态文案(只在没有任何历史且没有正在运行的任务时显示)
+        boolean showEmpty = records.isEmpty() && (controller.getState().status != IndexController.Status.RUNNING
+                && controller.getState().status != IndexController.Status.PAUSED);
+        emptyView.setVisibility(showEmpty ? View.VISIBLE : View.GONE);
         emptyView.setText(R.string.empty_history);
+    }
+
+    @Override
+    protected void onPause() {
+        controller.removeListener(this);
+        super.onPause();
+    }
+
+    // ---------------- IndexController.Listener ----------------
+
+    @Override
+    public void onProgress(@NonNull IndexController.State s) {
+        if (adapter != null) adapter.updateRunning(s);
+    }
+
+    @Override
+    public void onStatus(@NonNull IndexController.State s) {
+        if (adapter != null) adapter.updateRunning(s);
     }
 }

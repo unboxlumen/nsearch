@@ -44,9 +44,11 @@ public final class IndexPipeline {
     /** 每处理 N 个文件后 commit + maybeRefresh 一次。 */
     @VisibleForTesting
     static final int COMMIT_EVERY = 200;
-    /** 每处理 N 个文件后向 UI 投递一次进度（避免主线程被通知淹没）。 */
+    /** 每处理 N 个文件后向 UI 投递一次进度(避免主线程被通知淹没,但要够细
+     *  让首页 resultCount 行能实时反映已索引文件数)。
+     */
     @VisibleForTesting
-    static final int NOTIFY_EVERY = 25;
+    static final int NOTIFY_EVERY = 5;
     /** 暂停时 wait 的间隔；用于取消检查。 */
     @VisibleForTesting
     static final long PAUSE_POLL_MS = 200;

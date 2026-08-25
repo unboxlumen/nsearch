@@ -100,4 +100,6 @@
     <string name="toast_index_paused">Paused</string>
     <string name="toolbar_idle_badge">%1$d</string>
     <string name="cd_idle_badge">Indexed files. Tap to reindex.</string>
+    <string name="index_active_count">Indexing %1$d / %2$d</string>
+    <string name="history_running">Running…</string>
 </resources>
