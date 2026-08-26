@@ -11,10 +11,15 @@ import com.unbox.nsearch.model.SearchResult;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 把 {@link TopDocs} 里的 {@link ScoreDoc} 列表转成 {@link SearchResult}，附带高亮摘要。
@@ -39,18 +44,19 @@ public final class ResultBuilder {
      * @return 转换后的 SearchResult 列表，顺序与 score 一致
      */
     @NonNull
-    public static java.util.List<SearchResult> build(@NonNull Context appContext,
-                                                     @NonNull Analyzer analyzer,
-                                                     @NonNull Query query,
-                                                     @NonNull IndexSearcher searcher,
-                                                     @NonNull TopDocs td) throws java.io.IOException {
-        java.util.List<SearchResult> results = new java.util.ArrayList<>();
+    public static List<SearchResult> build(@NonNull Context appContext,
+                                           @NonNull Analyzer analyzer,
+                                           @NonNull Query query,
+                                           @NonNull IndexSearcher searcher,
+                                           @NonNull TopDocs td) throws IOException {
+        List<SearchResult> results = new ArrayList<>();
         for (ScoreDoc sd : td.scoreDocs) {
             Document d = searcher.doc(sd.doc);
             String name = d.get(LuceneManager.Fields.NAME);
             String display = d.get(LuceneManager.Fields.DISPLAY);
             String openUri = d.get(LuceneManager.Fields.OPEN_URI);
-            boolean contentUri = "1".equals(d.get(LuceneManager.Fields.IS_CONTENT));
+            boolean contentUri = LuceneManager.Fields.IS_CONTENT_TRUE.equals(
+                    d.get(LuceneManager.Fields.IS_CONTENT));
             long size = fieldLong(d, LuceneManager.Fields.SIZE);
             long modified = fieldLong(d, LuceneManager.Fields.MODIFIED);
             String snippet = d.get(LuceneManager.Fields.SNIPPET);
@@ -67,7 +73,7 @@ public final class ResultBuilder {
     }
 
     private static long fieldLong(Document d, String name) {
-        org.apache.lucene.index.IndexableField f = d.getField(name);
+        IndexableField f = d.getField(name);
         if (f == null || f.numericValue() == null) return 0;
         return f.numericValue().longValue();
     }

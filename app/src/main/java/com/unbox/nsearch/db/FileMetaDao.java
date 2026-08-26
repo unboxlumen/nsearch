@@ -74,7 +74,7 @@ public final class FileMetaDao {
         db.getWritableDatabase().delete(TABLE, Cols.PATH + "=?", new String[]{path});
     }
 
-    public void clearAll() {
+    public void clear() {
         db.getWritableDatabase().delete(TABLE, null, null);
     }
 
@@ -83,7 +83,7 @@ public final class FileMetaDao {
         Set<String> set = new HashSet<>();
         try (Cursor c = db.getReadableDatabase().query(TABLE,
                 new String[]{Cols.PATH}, null, null, null, null, null)) {
-            while (c.moveToNext()) set.add(c.getString(0));
+            while (c.moveToNext()) set.add(c.getString(c.getColumnIndexOrThrow(Cols.PATH)));
         }
         return set;
     }
@@ -94,7 +94,7 @@ public final class FileMetaDao {
                 Cols.STATUS + "=?",
                 new String[]{String.valueOf(IndexDatabase.STATUS_DONE)},
                 null, null, null)) {
-            return c.moveToFirst() ? c.getInt(0) : 0;
+            return c.moveToFirst() ? c.getInt(c.getColumnIndexOrThrow("COUNT(*)")) : 0;
         }
     }
 

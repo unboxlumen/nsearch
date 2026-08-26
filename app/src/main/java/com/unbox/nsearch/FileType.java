@@ -14,7 +14,8 @@ public enum FileType {
     DOC("doc", R.string.type_doc), // 同时匹配 .doc / .docx
     PPT("ppt", R.string.type_ppt); // 同时匹配 .ppt / .pptx
 
-    public final String ext;
+    /** 对应的扩展名（小写，无点）。包级可见，供 {@link FileScanner} 使用。 */
+    final String ext;
     public final int labelRes;
 
     FileType(String ext, int labelRes) {
@@ -40,7 +41,7 @@ public enum FileType {
         return null;
     }
 
-    public boolean isEnabled(java.util.Set<String> enabledTypes) {
+    boolean isEnabled(java.util.Set<String> enabledTypes) {
         return enabledTypes.contains(ext);
     }
 }

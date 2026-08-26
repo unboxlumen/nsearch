@@ -21,8 +21,8 @@ import androidx.annotation.NonNull;
  */
 public final class SearchBoxController {
 
-    /** 防抖间隔，单位毫秒。暴露成常量便于单测验证。 */
-    public static final long DEBOUNCE_MS = 300L;
+    /** 防抖间隔，单位毫秒。 */
+    private static final long DEBOUNCE_MS = 300L;
 
     public interface Listener {
         /** 当用户触发「键盘搜索键」「清空按钮」「debounce 等待后」任一动作时回调。 */
@@ -94,7 +94,7 @@ public final class SearchBoxController {
             @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void onTextChanged(CharSequence s, int a, int b, int c) { }
             @Override public void afterTextChanged(Editable s) {
-                String q = s == null ? "" : s.toString();
+                String q = textOf(s);
                 currentQuery = q;
                 btnClear.setVisibility(TextUtils.isEmpty(q) ? View.GONE : View.VISIBLE);
                 handler.removeCallbacks(debounceTask);
@@ -114,9 +114,12 @@ public final class SearchBoxController {
     private void triggerSearchNow() {
         handler.removeCallbacks(debounceTask);
         // 先 commit 文本,确保 currentQuery 是最终值
-        Editable e = searchBox.getText();
-        currentQuery = e == null ? "" : e.toString();
+        currentQuery = textOf(searchBox.getText());
         listener.onQueryChanged(currentQuery);
         searchBox.clearFocus();
+    }
+
+    private static String textOf(@androidx.annotation.Nullable Editable e) {
+        return e == null ? "" : e.toString();
     }
 }

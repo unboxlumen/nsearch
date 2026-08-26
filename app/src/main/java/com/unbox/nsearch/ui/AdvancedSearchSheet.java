@@ -1,11 +1,11 @@
 package com.unbox.nsearch.ui;
 
 import android.content.Context;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.button.MaterialButton;
@@ -30,8 +30,8 @@ import com.unbox.nsearch.Settings;
 public final class AdvancedSearchSheet {
 
     public interface Listener {
-        /** mode=null 表示未变化；synonym=null 表示未变化。 */
-        void onSettingChanged(@NonNull Settings.SearchMode mode, Boolean synonym);
+        /** mode 恒非空；synonym 仅在用户拨动了同义词开关时非空。 */
+        void onSettingChanged(@NonNull Settings.SearchMode mode, @Nullable Boolean synonym);
     }
 
     public static void show(@NonNull Context context,
@@ -43,9 +43,6 @@ public final class AdvancedSearchSheet {
     private final Context context;
     private final Settings settings;
     private final Listener listener;
-    private BottomSheetDialog sheet;
-    private MaterialButtonToggleGroup modeGroup;
-    private MaterialSwitch synonymSwitch;
 
     private AdvancedSearchSheet(@NonNull Context context,
                                 @NonNull Settings settings,
@@ -56,12 +53,12 @@ public final class AdvancedSearchSheet {
     }
 
     private void show() {
-        sheet = new BottomSheetDialog(context);
+        BottomSheetDialog sheet = new BottomSheetDialog(context);
         View root = LayoutInflater.from(context).inflate(R.layout.bottom_sheet_advanced_search, null);
         sheet.setContentView(root);
 
-        modeGroup = root.findViewById(R.id.sheetModeGroup);
-        synonymSwitch = root.findViewById(R.id.sheetSynonym);
+        MaterialButtonToggleGroup modeGroup = root.findViewById(R.id.sheetModeGroup);
+        MaterialSwitch synonymSwitch = root.findViewById(R.id.sheetSynonym);
         MaterialButton done = root.findViewById(R.id.sheetDone);
 
         // 还原当前状态(先设置,再挂监听,避免打开时误触发一次搜索)
@@ -75,7 +72,6 @@ public final class AdvancedSearchSheet {
         modeGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) return;
             Settings.SearchMode mode = modeForId(checkedId);
-            if (mode == null) return;
             settings.setSearchMode(mode);
             listener.onSettingChanged(mode, null);
         });
@@ -92,18 +88,10 @@ public final class AdvancedSearchSheet {
     /**
      * 从 layout id 反查枚举；集中在一处,避免散落字符串。
      */
+    @NonNull
     private static Settings.SearchMode modeForId(int checkedId) {
         if (checkedId == R.id.sheetModeStrict) return Settings.SearchMode.STRICT;
         if (checkedId == R.id.sheetModeLoose) return Settings.SearchMode.LOOSE;
-        if (checkedId == R.id.sheetModeMedium) return Settings.SearchMode.MEDIUM;
-        return null;
-    }
-
-    /**
-     * 仅暴露给宿主在状态栏点击「应用同义词立即重搜」场景使用 ——
-     * 防止 string 判空失误,本类统一处理 isEmpty 判断。
-     */
-    public static boolean shouldRerun(@NonNull String lastQuery) {
-        return !TextUtils.isEmpty(lastQuery);
+        return Settings.SearchMode.MEDIUM;
     }
 }

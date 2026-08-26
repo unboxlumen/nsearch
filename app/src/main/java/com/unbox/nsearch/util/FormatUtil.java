@@ -1,7 +1,8 @@
 package com.unbox.nsearch.util;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 /**
@@ -9,8 +10,12 @@ import java.util.Locale;
  */
 public final class FormatUtil {
 
-    private static final SimpleDateFormat SDF =
-            new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
+    /** 界面里各项信息之间的统一分隔符（单空格 · 单空格）。 */
+    public static final String SEPARATOR = " · ";
+
+    /** 线程安全（{@link DateTimeFormatter} 不可变），可安全地被任意线程并发调用。 */
+    private static final DateTimeFormatter DATE_FMT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.getDefault());
 
     private FormatUtil() {
     }
@@ -29,7 +34,7 @@ public final class FormatUtil {
 
     public static String formatDate(long millis) {
         if (millis <= 0) return "";
-        return SDF.format(new Date(millis));
+        return Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).format(DATE_FMT);
     }
 
     public static String formatDuration(long ms) {

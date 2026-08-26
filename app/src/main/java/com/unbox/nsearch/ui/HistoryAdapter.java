@@ -21,14 +21,16 @@ import java.util.List;
  *
  * <p>支持两类 item:
  * <ul>
- *   <li>{@link Type#RUNNING}  —— 当 {@link IndexController.State#status} 是 RUNNING/PAUSED 时,
+ *   <li>RUNNING  —— 当 {@link IndexController.State#status} 是 RUNNING/PAUSED 时,
  *       在列表顶部插入一条"正在索引"虚拟行,显示当前实时进度和当前文件。
  *       这条行由 {@link HistoryActivity} 主动监听 Controller 刷新,
  *       并通过 {@link #updateRunning(IndexController.State)} 推送进来。</li>
- *   <li>{@link Type#HISTORY}  —— 已完成/历史 {@link ScanRecord}。</li>
+ *   <li>HISTORY  —— 已完成/历史 {@link ScanRecord}。</li>
  * </ul>
+ *
+ * <p>两类 item 复用同一布局 {@code R.layout.item_history}，因此只有一个 {@link VH}。
  */
-public class HistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.VH> {
 
     private static final int TYPE_RUNNING = 0;
     private static final int TYPE_HISTORY = 1;
@@ -48,8 +50,7 @@ public class HistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
      * status 为 RUNNING/PAUSED 时显示;其它状态隐藏。
      */
     public void updateRunning(@NonNull IndexController.State state) {
-        boolean active = state.status == IndexController.Status.RUNNING
-                || state.status == IndexController.Status.PAUSED;
+        boolean active = state.status.isActive();
         boolean changed = (showRunning != active) || (active && running != state);
         this.running = state;
         this.showRunning = active;
@@ -66,40 +67,36 @@ public class HistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_history, parent, false);
-        if (viewType == TYPE_RUNNING) {
-            return new RunningVH(v);
-        }
-        return new HistoryVH(v);
+        return new VH(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull VH h, int position) {
         if (showRunning && position == 0) {
-            bindRunning((RunningVH) holder, running);
+            bindRunning(h, running);
             return;
         }
         int histIdx = showRunning ? position - 1 : position;
-        ScanRecord r = history.get(histIdx);
-        bindHistory((HistoryVH) holder, r);
+        bindHistory(h, history.get(histIdx));
     }
 
-    private void bindRunning(@NonNull RunningVH h, @NonNull IndexController.State s) {
+    private void bindRunning(@NonNull VH h, @NonNull IndexController.State s) {
         h.time.setText(R.string.history_running);
         // 用 brand 色突出正在运行:用 typed value 解析 ?attr/colorPrimary
         int primary = resolveThemeColor(h.itemView, com.google.android.material.R.attr.colorPrimary);
         h.time.setTextColor(primary);
-        String pct = s.total > 0 ? (s.indexed * 100L / s.total) + "%" : "0%";
+        String pct = s.percent() + "%";
         StringBuilder sb = new StringBuilder();
         sb.append(h.itemView.getContext().getString(R.string.index_active_count, s.indexed, s.total));
-        sb.append(" · ").append(pct);
+        sb.append(FormatUtil.SEPARATOR).append(pct);
         if (s.currentFile != null && !s.currentFile.isEmpty()) {
-            sb.append(" · ").append(s.currentFile);
+            sb.append(FormatUtil.SEPARATOR).append(s.currentFile);
         }
         if (s.status == IndexController.Status.PAUSED) {
-            sb.append(" · ").append(h.itemView.getContext().getString(R.string.btn_pause));
+            sb.append(FormatUtil.SEPARATOR).append(h.itemView.getContext().getString(R.string.btn_pause));
         }
         h.summary.setText(sb.toString());
     }
@@ -111,21 +108,21 @@ public class HistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return tv.data;
     }
 
-    private void bindHistory(@NonNull HistoryVH h, @NonNull ScanRecord r) {
+    private void bindHistory(@NonNull VH h, @NonNull ScanRecord r) {
         h.time.setText(FormatUtil.formatDate(r.startedAt));
         // 历史 item:让 TextView 自己回到 ?textColorPrimary(布局里已设,这里只需重置状态即可)
         StringBuilder sb = new StringBuilder();
-        sb.append(h.itemView.getContext().getString(R.string.files_total, r.totalFiles)).append("  ·  ");
+        sb.append(h.itemView.getContext().getString(R.string.files_total, r.totalFiles)).append(FormatUtil.SEPARATOR);
         sb.append(h.itemView.getContext().getString(R.string.history_ok)).append(' ').append(r.indexedFiles);
         if (r.failedFiles > 0) {
-            sb.append("  · ").append(h.itemView.getContext().getString(R.string.history_failed))
+            sb.append(FormatUtil.SEPARATOR).append(h.itemView.getContext().getString(R.string.history_failed))
                     .append(' ').append(r.failedFiles);
         }
         if (r.skippedFiles > 0) {
-            sb.append("  · ").append(h.itemView.getContext().getString(R.string.history_skipped))
+            sb.append(FormatUtil.SEPARATOR).append(h.itemView.getContext().getString(R.string.history_skipped))
                     .append(' ').append(r.skippedFiles);
         }
-        sb.append("  · ").append(h.itemView.getContext().getString(R.string.history_duration,
+        sb.append(FormatUtil.SEPARATOR).append(h.itemView.getContext().getString(R.string.history_duration,
                 FormatUtil.formatDuration(r.durationMs)));
         h.summary.setText(sb.toString());
     }
@@ -135,22 +132,11 @@ public class HistoryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return history.size() + (showRunning ? 1 : 0);
     }
 
-    /** 历史 item ViewHolder:使用 item_history 布局的默认字段。 */
-    static class HistoryVH extends RecyclerView.ViewHolder {
+    /** 唯一的 ViewHolder：两类 item 复用同一布局。 */
+    static class VH extends RecyclerView.ViewHolder {
         final TextView time, summary;
 
-        HistoryVH(View v) {
-            super(v);
-            time = v.findViewById(R.id.historyTime);
-            summary = v.findViewById(R.id.historySummary);
-        }
-    }
-
-    /** "正在运行" item ViewHolder:复用同一布局,通过 tag/binding 区分。 */
-    static class RunningVH extends RecyclerView.ViewHolder {
-        final TextView time, summary;
-
-        RunningVH(View v) {
+        VH(View v) {
             super(v);
             time = v.findViewById(R.id.historyTime);
             summary = v.findViewById(R.id.historySummary);

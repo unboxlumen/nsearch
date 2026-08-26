@@ -114,14 +114,4 @@ public final class Settings {
     public void clearScopeUris() {
         prefs.edit().remove(KEY_SCOPE_URIS).apply();
     }
-
-    /**
-     * {@code putString} 在重构中暴露了「任意 key → 任意 String」的破口
-     * (无法保证 value 合法、也无法被 IDE 重命名追踪)。
-     * 所有写操作请走强类型 setter（{@link #setSearchMode} / {@link #setSynonymEnabled} 等）。
-     */
-    @Deprecated
-    public void putString(String key, String value) {
-        prefs.edit().putString(key, value).apply();
-    }
 }

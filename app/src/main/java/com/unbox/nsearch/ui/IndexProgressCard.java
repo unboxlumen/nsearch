@@ -99,39 +99,39 @@ public final class IndexProgressCard implements IndexController.Listener {
         progressBar.setProgress(s.indexed);
         progressStats.setText(progressStats.getContext().getString(R.string.index_stats, s.indexed, s.total));
         progressCurrent.setText(progressCurrent.getContext().getString(R.string.indexing_current, s.currentFile));
-        int pct = s.total > 0 ? (int) (s.indexed * 100L / s.total) : 0;
+        int pct = s.percent();
         if (ring != null) ring.setProgress(pct);
         if (ringPct != null) ringPct.setText(pct + "%");
-        boolean active = s.status == IndexController.Status.RUNNING
-                || s.status == IndexController.Status.PAUSED;
+        boolean active = s.status.isActive();
         if (active) {
             // 活跃态:resultCount 实时显示「已索引 N / M」+ 当前文件,
             // 这样首页上"文件总数"后面的数字会一直变化,无需打开详情卡就能感知进度。
             resultCount.setText(resultCountFormatter.formatActive(s.indexed, s.total, s.currentFile));
         } else {
             // 索引结束后刷新空闲徽章显示最新总数
-            if (idleBadge != null) {
-                int n = resultCountFormatter.formatIdleCount();
-                idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, n));
-            }
+            refreshIdleBadge();
             resultCount.setText(resultCountFormatter.formatIdle());
         }
     }
 
     @Override
     public void onStatus(IndexController.State s) {
-        boolean active = s.status == IndexController.Status.RUNNING || s.status == IndexController.Status.PAUSED;
+        boolean active = s.status.isActive();
         applyActiveState(active);
-        btnPauseResume.setText(active && s.status == IndexController.Status.PAUSED
+        btnPauseResume.setText(s.status == IndexController.Status.PAUSED
                 ? R.string.btn_resume : R.string.btn_pause);
         if (!active) {
             // 空闲态:刷新徽章,关闭详情卡
-            if (idleBadge != null) {
-                int n = resultCountFormatter.formatIdleCount();
-                idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, n));
-            }
+            refreshIdleBadge();
             progressCard.setVisibility(View.GONE);
             resultCount.setText(resultCountFormatter.formatIdle());
+        }
+    }
+
+    private void refreshIdleBadge() {
+        if (idleBadge != null) {
+            int n = resultCountFormatter.formatIdleCount();
+            idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, n));
         }
     }
 
@@ -144,11 +144,6 @@ public final class IndexProgressCard implements IndexController.Listener {
         if (idleBadge != null) {
             idleBadge.setVisibility(active ? View.GONE : View.VISIBLE);
         }
-    }
-
-    /** 让宿主在详情卡点击外部时被关闭。 */
-    public void hideDetail() {
-        if (progressCard != null) progressCard.setVisibility(View.GONE);
     }
 
     /**

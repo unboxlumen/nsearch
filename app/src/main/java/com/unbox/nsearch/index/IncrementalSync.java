@@ -1,6 +1,7 @@
 package com.unbox.nsearch.index;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.unbox.nsearch.FileScanner;
 import com.unbox.nsearch.LuceneManager;
@@ -8,7 +9,6 @@ import com.unbox.nsearch.db.FileMetaDao;
 import com.unbox.nsearch.db.IndexDatabase;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -48,7 +48,7 @@ public final class IncrementalSync {
      *
      * <p>从 {@link #isUnchanged(FileScanner.ScanItem)} 抽出,便于在 JVM 单测中覆盖各种边界(无 DB 也能跑)。
      */
-    public static boolean matches(@androidx.annotation.Nullable FileMetaDao.FileRow row,
+    public static boolean matches(@Nullable FileMetaDao.FileRow row,
                                   @NonNull FileScanner.ScanItem item) {
         if (row == null || row.status != IndexDatabase.STATUS_DONE) return false;
         if (row.size != item.length()) return false;
@@ -75,18 +75,9 @@ public final class IncrementalSync {
     }
 
     /**
-     * 把 List 转成可变 Set 容器，便于「扫描过程中 seen.add() 累加」。
+     * 返回一个可变的 Set 容器，便于「扫描过程中 {@code seen.add()} 累加」。
      */
     public static Set<String> newSeenSet() {
         return new HashSet<>();
-    }
-
-    /**
-     * 把 List 转成 Set（用于一次性完成扫描后批量 cleanup）。
-     */
-    public static Set<String> toSeenSet(@NonNull List<FileScanner.ScanItem> items) {
-        Set<String> seen = new HashSet<>(items.size());
-        for (FileScanner.ScanItem item : items) seen.add(item.getPath());
-        return seen;
     }
 }

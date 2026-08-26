@@ -40,7 +40,8 @@ public final class DocumentBuilder {
         doc.add(new StringField(LuceneManager.Fields.DISPLAY, item.getDisplayPath(), Field.Store.YES));
         doc.add(new StringField(LuceneManager.Fields.OPEN_URI, item.getOpenUri(), Field.Store.YES));
         doc.add(new StringField(LuceneManager.Fields.IS_CONTENT,
-                item.isContentUri() ? "1" : "0", Field.Store.YES));
+                item.isContentUri() ? LuceneManager.Fields.IS_CONTENT_TRUE : LuceneManager.Fields.IS_CONTENT_FALSE,
+                Field.Store.YES));
         return doc;
     }
 }

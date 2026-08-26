@@ -31,7 +31,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class IndexController {
 
-    public enum Status { IDLE, RUNNING, PAUSED, CANCELLED, DONE }
+    public enum Status {
+        IDLE, RUNNING, PAUSED, CANCELLED, DONE;
+
+        /** 是否处于「正在索引」的活跃态（RUNNING / PAUSED）。 */
+        public boolean isActive() {
+            return this == RUNNING || this == PAUSED;
+        }
+    }
 
     public static class State {
         public Status status = Status.IDLE;
@@ -42,6 +49,11 @@ public final class IndexController {
         public String currentFile = "";
         public long startTime = 0;
         public long endTime = 0;
+
+        /** 索引进度百分比（0..100）；{@code total <= 0} 时为 0。 */
+        public int percent() {
+            return total > 0 ? (int) (indexed * 100L / total) : 0;
+        }
     }
 
     public interface Listener {
@@ -168,7 +180,7 @@ public final class IndexController {
                 km.maybeRefresh();
             } catch (Exception ignored) {
             }
-            com.unbox.nsearch.db.IndexDatabase.get(appCtx).clearAll();
+            com.unbox.nsearch.db.IndexDatabase.get(appCtx).fileMeta().clear();
             synchronized (state) {
                 state.status = Status.IDLE;
                 state.indexed = 0;
@@ -177,8 +189,7 @@ public final class IndexController {
                 state.failed = 0;
                 state.currentFile = "";
             }
-            notifier.notifyStatus(state);
-            notifier.notifyProgress(state);
+            notifier.notifyAllState(state);
         });
     }
 

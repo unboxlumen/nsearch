@@ -32,6 +32,11 @@ import java.io.File;
  */
 public final class LuceneManager {
 
+    /** 索引在私有存储中的目录名。 */
+    public static final String INDEX_DIR_NAME = "lucene_index";
+    /** IndexWriter RAM 缓冲区大小（MB）。 */
+    public static final int RAM_BUFFER_MB = 64;
+
     /** 摘要字段存储上限：超过此长度的内容只取头部用于生成高亮片段。 */
     public static final int SNIPPET_LIMIT = 200_000;
 
@@ -49,6 +54,10 @@ public final class LuceneManager {
         public static final String OPEN_URI = "openuri";
         /** 是否为 content Uri（SAF 文档为 1，本地文件为 0） */
         public static final String IS_CONTENT = "iscontent";
+        /** {@link #IS_CONTENT} 字段值：表示 content Uri（SAF 文档）。 */
+        public static final String IS_CONTENT_TRUE = "1";
+        /** {@link #IS_CONTENT} 字段值：表示本地文件。 */
+        public static final String IS_CONTENT_FALSE = "0";
     }
 
     private static LuceneManager instance;
@@ -66,14 +75,14 @@ public final class LuceneManager {
     }
 
     private LuceneManager(Context ctx) throws IOException {
-        File dir = ctx.getDir("lucene_index", Context.MODE_PRIVATE);
+        File dir = ctx.getDir(INDEX_DIR_NAME, Context.MODE_PRIVATE);
         //noinspection ResultOfMethodCallIgnored
         dir.mkdirs();
         this.directory = FSDirectory.open(dir.toPath());
         this.indexAnalyzer = new HybridAnalyzer(null, false);
         IndexWriterConfig cfg = new IndexWriterConfig(indexAnalyzer);
         cfg.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-        cfg.setRAMBufferSizeMB(64);
+        cfg.setRAMBufferSizeMB(RAM_BUFFER_MB);
         this.writer = new IndexWriter(directory, cfg);
         this.searcherManager = new SearcherManager(writer, new SearcherFactory());
     }
@@ -105,6 +114,12 @@ public final class LuceneManager {
 
     /** 让搜索器看到最新写入的文档（NRT）。索引过程中周期性调用。 */
     public void maybeRefresh() throws IOException {
+        searcherManager.maybeRefresh();
+    }
+
+    /** 提交 + 刷新搜索器，一次调用完成「落盘并立即可搜」。 */
+    public void commitAndRefresh() throws IOException {
+        writer.commit();
         searcherManager.maybeRefresh();
     }
 

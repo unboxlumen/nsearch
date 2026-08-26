@@ -35,17 +35,6 @@ public final class SearchExecutor {
 
     private SearchExecutor() {}
 
-    /** 后台执行 {@code task}，完成后在主线程执行 {@code onResult}。 */
-    public void submit(@NonNull Runnable task, @NonNull Runnable onResult) {
-        worker.execute(() -> {
-            try {
-                task.run();
-            } finally {
-                main.post(onResult);
-            }
-        });
-    }
-
     /** 仅后台执行，不投递回主线程。 */
     public void submit(@NonNull Runnable task) {
         worker.execute(task);
@@ -54,10 +43,5 @@ public final class SearchExecutor {
     /** 在主线程上执行。 */
     public void postToMain(@NonNull Runnable r) {
         main.post(r);
-    }
-
-    /** 应用退出时（一般在 Application.onTerminate 或测试中）调用，释放线程。 */
-    public void shutdown() {
-        worker.shutdownNow();
     }
 }

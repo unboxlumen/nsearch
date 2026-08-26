@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -58,7 +57,7 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
         h.name.setText(r.name);
 
         // 元信息：类型 · 大小
-        h.meta.setText(r.typeLabel + "  ·  " + FormatUtil.formatSize(r.size));
+        h.meta.setText(r.typeLabel + FormatUtil.SEPARATOR + FormatUtil.formatSize(r.size));
 
         // 摘要片段（含命中高亮 HTML）
         if (r.snippetHtml != null && !r.snippetHtml.isEmpty()) {
@@ -79,7 +78,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
     }
 
     static class VH extends RecyclerView.ViewHolder {
-        final ImageView icon;     // 文件类型图标
         final TextView name;      // 文件名
         final TextView meta;      // 类型 · 大小
         final TextView snippet;   // 摘要
@@ -87,7 +85,6 @@ public class SearchResultAdapter extends RecyclerView.Adapter<SearchResultAdapte
 
         VH(View v) {
             super(v);
-            icon = v.findViewById(R.id.resultIcon);
             name = v.findViewById(R.id.resultName);
             meta = v.findViewById(R.id.resultMeta);
             snippet = v.findViewById(R.id.resultSnippet);

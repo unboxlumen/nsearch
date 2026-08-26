@@ -6,7 +6,6 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -16,6 +15,9 @@ import java.util.List;
  * .xlsx 文本提取（不依赖 POI）。
  * .xlsx 本质是一个 zip：先读 xl/sharedStrings.xml 得到共享字符串表，
  * 再遍历各 xl/worksheets/sheetN.xml 还原单元格文本。
+ *
+ * <p>zip 读取、limit 归一化、异常包装由 {@link OoxmlText} 共享；
+ * 单元格/共享字符串的 XML 遍历结构与 docx/pptx 不同，各自独立。
  */
 public final class XlsxTextExtractor {
 
@@ -26,28 +28,15 @@ public final class XlsxTextExtractor {
 
     public static String extract(InputStream in, int charLimit) throws IOException {
         try {
-            byte[] data = readAll(in, MAX_BYTES);
+            byte[] data = OoxmlText.readAll(in, MAX_BYTES);
             List<String> shared = parseSharedStrings(data);
+            int limit = OoxmlText.normalizeLimit(charLimit);
             StringBuilder sb = new StringBuilder();
-            parseSheets(data, shared, sb, charLimit <= 0 ? Integer.MAX_VALUE : charLimit);
-            int end = Math.min(sb.length(), charLimit <= 0 ? sb.length() : charLimit);
-            return sb.substring(0, end);
+            parseSheets(data, shared, sb, limit);
+            return TextExtractor.truncate(sb.toString(), limit);
         } catch (XmlPullParserException e) {
-            throw new IOException("xlsx 解析失败: " + e.getMessage(), e);
+            throw OoxmlText.wrapXmlError("xlsx", e);
         }
-    }
-
-    private static byte[] readAll(InputStream in, int max) throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        byte[] buf = new byte[8192];
-        int n;
-        long total = 0;
-        while ((n = in.read(buf)) > 0) {
-            total += n;
-            if (total > max) throw new IOException("xlsx too large");
-            bos.write(buf, 0, n);
-        }
-        return bos.toByteArray();
     }
 
     private static List<String> parseSharedStrings(byte[] data) throws IOException, XmlPullParserException {

@@ -1,7 +1,5 @@
 package com.unbox.nsearch.util;
 
-import android.util.Log;
-
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 
@@ -23,15 +21,13 @@ public final class DocTextExtractor {
      *         以保证索引进程在个别损坏文件或 POI 在 Android 上的兼容问题上不崩溃（文件名仍可命中）。
      */
     public static String extract(InputStream in, int charLimit) {
-        int limit = charLimit <= 0 ? Integer.MAX_VALUE : charLimit;
+        int limit = OoxmlText.normalizeLimit(charLimit);
         try (HWPFDocument doc = new HWPFDocument(in);
              WordExtractor ex = new WordExtractor(doc)) {
             String text = ex.getText();
-            if (text == null) return "";
-            int end = Math.min(text.length(), limit);
-            return text.substring(0, end);
+            return TextExtractor.truncate(text, limit);
         } catch (Throwable t) {
-            Log.w(TAG, "doc 抽取失败，降级为空: " + t.getMessage());
+            ErrorReporter.report(TAG, t);
             return "";
         }
     }

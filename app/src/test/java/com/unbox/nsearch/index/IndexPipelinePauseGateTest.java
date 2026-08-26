@@ -19,14 +19,19 @@ import static org.junit.Assert.assertTrue;
  */
 public class IndexPipelinePauseGateTest {
 
+    private static final long WAIT_TIMEOUT_MS = 500;
+    private static final long IMMEDIATE_BOUND_MS = 100;
+    private static final long BLOCK_SLEEP_MS = 150;
+    private static final long JOIN_TIMEOUT_MS = 1000;
+
     @Test
     public void notPaused_returnsImmediately() {
         AtomicBoolean paused = new AtomicBoolean(false);
         AtomicBoolean cancelled = new AtomicBoolean(false);
         long t0 = System.currentTimeMillis();
-        IndexPipeline.waitWhilePaused(paused, cancelled, new Object(), 500);
+        IndexPipeline.waitWhilePaused(paused, cancelled, new Object(), WAIT_TIMEOUT_MS);
         long elapsed = System.currentTimeMillis() - t0;
-        assertTrue("应立即返回,但耗时 " + elapsed + "ms", elapsed < 100);
+        assertTrue("应立即返回,但耗时 " + elapsed + "ms", elapsed < IMMEDIATE_BOUND_MS);
     }
 
     @Test
@@ -34,51 +39,38 @@ public class IndexPipelinePauseGateTest {
         AtomicBoolean paused = new AtomicBoolean(true);
         AtomicBoolean cancelled = new AtomicBoolean(true);
         long t0 = System.currentTimeMillis();
-        IndexPipeline.waitWhilePaused(paused, cancelled, new Object(), 500);
+        IndexPipeline.waitWhilePaused(paused, cancelled, new Object(), WAIT_TIMEOUT_MS);
         long elapsed = System.currentTimeMillis() - t0;
-        assertTrue("cancel 后应立即返回,但耗时 " + elapsed + "ms", elapsed < 100);
+        assertTrue("cancel 后应立即返回,但耗时 " + elapsed + "ms", elapsed < IMMEDIATE_BOUND_MS);
     }
 
     @Test
     public void paused_blocksUntilResumed() throws InterruptedException {
-        AtomicBoolean paused = new AtomicBoolean(true);
-        AtomicBoolean cancelled = new AtomicBoolean(false);
-        Object lock = new Object();
-
-        Thread t = new Thread(() -> {
-            // 持续阻塞直到 paused=false
-            IndexPipeline.waitWhilePaused(paused, cancelled, lock, 200);
-        });
-        t.start();
-        Thread.sleep(150); // 让它真的进入 wait
-        assertTrue("线程应仍处于 RUNNABLE/WAITING", t.isAlive());
-
-        paused.set(false);
-        synchronized (lock) {
-            lock.notifyAll();
-        }
-        t.join(1000);
-        assertFalse("resume 后线程应已退出", t.isAlive());
+        assertUnblocksAfter(false, false);
     }
 
     @Test
     public void paused_blocksUntilCancelled() throws InterruptedException {
+        assertUnblocksAfter(false, true);
+    }
+
+    private static void assertUnblocksAfter(boolean pausedValue, boolean cancelledValue) throws InterruptedException {
         AtomicBoolean paused = new AtomicBoolean(true);
         AtomicBoolean cancelled = new AtomicBoolean(false);
         Object lock = new Object();
 
-        Thread t = new Thread(() -> {
-            IndexPipeline.waitWhilePaused(paused, cancelled, lock, 500);
-        });
+        Thread t = new Thread(() ->
+                IndexPipeline.waitWhilePaused(paused, cancelled, lock, WAIT_TIMEOUT_MS));
         t.start();
-        Thread.sleep(150);
+        Thread.sleep(BLOCK_SLEEP_MS);
         assertTrue("线程应仍处于阻塞", t.isAlive());
 
-        cancelled.set(true);
+        paused.set(pausedValue);
+        cancelled.set(cancelledValue);
         synchronized (lock) {
             lock.notifyAll();
         }
-        t.join(1000);
-        assertFalse("cancel 后线程应已退出", t.isAlive());
+        t.join(JOIN_TIMEOUT_MS);
+        assertFalse("解锁后线程应已退出", t.isAlive());
     }
 }

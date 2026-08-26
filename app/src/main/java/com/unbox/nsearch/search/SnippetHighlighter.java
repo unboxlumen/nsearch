@@ -24,7 +24,9 @@ import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
  */
 public final class SnippetHighlighter {
 
-    public static final int FRAGMENT_SIZE = 160;
+    private static final int FRAGMENT_SIZE = 160;
+    private static final String HIGHLIGHT_OPEN = "<b>";
+    private static final String HIGHLIGHT_CLOSE = "</b>";
 
     private SnippetHighlighter() {}
 
@@ -40,13 +42,14 @@ public final class SnippetHighlighter {
                                @Nullable String snippet) {
         if (snippet == null || snippet.isEmpty()) return "";
         try {
-            QueryScorer scorer = new QueryScorer(query, LuceneManager.Fields.CONTENT);
+            String field = LuceneManager.Fields.CONTENT;
+            QueryScorer scorer = new QueryScorer(query, field);
             Highlighter hl = new Highlighter(
-                    new SimpleHTMLFormatter("<b>", "</b>"),
+                    new SimpleHTMLFormatter(HIGHLIGHT_OPEN, HIGHLIGHT_CLOSE),
                     new SimpleHTMLEncoder(),
                     scorer);
             hl.setTextFragmenter(new SimpleFragmenter(FRAGMENT_SIZE));
-            String frag = hl.getBestFragment(analyzer, LuceneManager.Fields.CONTENT, snippet);
+            String frag = hl.getBestFragment(analyzer, field, snippet);
             if (frag != null && !frag.isEmpty()) return frag;
         } catch (Exception ignored) {
         }

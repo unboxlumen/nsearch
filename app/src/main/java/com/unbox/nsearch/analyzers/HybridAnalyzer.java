@@ -26,7 +26,7 @@ public final class HybridAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer src = new JiebaTokenizer();
         TokenStream tok = new LowerCaseFilter(src);
-        if (useSynonyms && synonymMap != null) {
+        if (useSynonyms) {
             tok = new SynonymGraphFilter(tok, synonymMap, true);
         }
         return new TokenStreamComponents(src, tok);

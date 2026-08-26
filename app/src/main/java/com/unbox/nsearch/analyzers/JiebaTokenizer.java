@@ -31,6 +31,7 @@ public final class JiebaTokenizer extends Tokenizer {
 
     private static final JiebaSegmenter SEGMENTER = new JiebaSegmenter();
     private static final Object SEG_LOCK = new Object();
+    private static final int READ_BUFFER_SIZE = 8192;
 
     private final List<Token> tokens = new ArrayList<>();
     private int cursor = 0;
@@ -52,7 +53,7 @@ public final class JiebaTokenizer extends Tokenizer {
         super.reset();
         // 整体读入输入文本（jieba 需要完整字符串）
         StringBuilder sb = new StringBuilder();
-        char[] buf = new char[8192];
+        char[] buf = new char[READ_BUFFER_SIZE];
         int n;
         while ((n = input.read(buf)) != -1) {
             sb.append(buf, 0, n);

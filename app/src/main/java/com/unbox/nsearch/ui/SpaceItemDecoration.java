@@ -13,6 +13,11 @@ import androidx.recyclerview.widget.RecyclerView;
  */
 public class SpaceItemDecoration extends RecyclerView.ItemDecoration {
 
+    /** 项间纵向间隔（dp），见 UI_DESIGN_GUIDE §2。 */
+    public static final int ITEM_GAP_DP = 8;
+    /** 末项底部额外间距（dp），见 UI_DESIGN_GUIDE §6。 */
+    public static final int BOTTOM_EXTRA_DP = 16;
+
     private final int verticalGap;
     private final int bottomExtra;
 

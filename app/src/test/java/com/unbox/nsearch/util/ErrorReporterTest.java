@@ -3,9 +3,6 @@ package com.unbox.nsearch.util;
 import org.junit.After;
 import org.junit.Test;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
 /**
  * {@link ErrorReporter} 的最小单测:
  *  - enabled=true 时 report 不抛异常;
@@ -23,19 +20,18 @@ public class ErrorReporterTest {
     public void report_doesNotThrow() {
         ErrorReporter.report("Test", new RuntimeException("boom"));
         // 不抛即通过
-        assertTrue(true);
     }
 
     @Test
     public void report_withMessage_doesNotThrow() {
         ErrorReporter.report("Test", new RuntimeException("boom"), "context");
-        assertTrue(true);
+        // 不抛即通过
     }
 
     @Test
     public void disabledReport_stillSafe() {
         ErrorReporter.setEnabled(false);
         ErrorReporter.report("Test", new RuntimeException("should be ignored"));
-        assertTrue(true);
+        // 不抛即通过
     }
 }

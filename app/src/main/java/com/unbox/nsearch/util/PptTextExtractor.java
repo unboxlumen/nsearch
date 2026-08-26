@@ -1,7 +1,5 @@
 package com.unbox.nsearch.util;
 
-import android.util.Log;
-
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
 import org.apache.poi.sl.extractor.SlideShowExtractor;
 
@@ -25,15 +23,13 @@ public final class PptTextExtractor {
      */
     @SuppressWarnings("unchecked")
     public static String extract(InputStream in, int charLimit) {
-        int limit = charLimit <= 0 ? Integer.MAX_VALUE : charLimit;
+        int limit = OoxmlText.normalizeLimit(charLimit);
         try (HSLFSlideShow ss = new HSLFSlideShow(in)) {
             SlideShowExtractor<?, ?> ex = new SlideShowExtractor<>(ss);
             String text = ex.getText();
-            if (text == null) return "";
-            int end = Math.min(text.length(), limit);
-            return text.substring(0, end);
+            return TextExtractor.truncate(text, limit);
         } catch (Throwable t) {
-            Log.w(TAG, "ppt 抽取失败，降级为空: " + t.getMessage());
+            ErrorReporter.report(TAG, t);
             return "";
         }
     }

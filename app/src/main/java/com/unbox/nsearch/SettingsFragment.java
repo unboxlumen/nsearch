@@ -30,7 +30,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
                 requireContext().getContentResolver().takePersistableUriPermission(uri,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 new Settings(requireContext()).addScopeUri(uri.toString());
-                Toast.makeText(getContext(), R.string.add_folder, Toast.LENGTH_SHORT).show();
+                toast(R.string.add_folder);
             }
         });
 
@@ -47,12 +47,12 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         if (trigger != null) trigger.setOnPreferenceClickListener(p -> {
             IndexController.State s = controller.getState();
             // 先 toast 一次当前状态作为点击反馈
-            Toast.makeText(getContext(), controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
+            toast(controller.debugSnapshot());
             if (s.status == IndexController.Status.RUNNING) {
-                Toast.makeText(getContext(), R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
+                toast(R.string.toast_index_already_running);
             } else {
                 controller.requestStart();
-                Toast.makeText(getContext(), R.string.toast_index_started, Toast.LENGTH_SHORT).show();
+                toast(R.string.toast_index_started);
             }
             return true;
         });
@@ -71,10 +71,18 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
         Preference clr = findPreference("clear_history");
         if (clr != null) clr.setOnPreferenceClickListener(p -> {
-            IndexDatabase.get(requireContext()).clearScanRecords();
-            Toast.makeText(getContext(), R.string.clear_history, Toast.LENGTH_SHORT).show();
+            IndexDatabase.get(requireContext()).scanHistory().clear();
+            toast(R.string.clear_history);
             return true;
         });
+    }
+
+    private void toast(int resId) {
+        Toast.makeText(getContext(), resId, Toast.LENGTH_SHORT).show();
+    }
+
+    private void toast(String msg) {
+        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
     }
 
     private void confirmDelete() {

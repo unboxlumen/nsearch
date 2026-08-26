@@ -21,8 +21,15 @@ import java.util.function.Consumer;
  * 扫描待索引文件。
  * 范围 = 主外部存储根目录（默认）+ 用户在设置里通过 SAF 添加的文件夹。
  * 仅收集启用类型（txt/md/csv/pdf/xls/xlsx）的常规文件，跳过系统/缓存目录。
+ *
+ * <p>本地 {@link File} 与 SAF {@link DocumentFile} 两条路径共用同一套遍历逻辑
+ * （{@link #walk(DirNode, Set, List, int, Consumer)}），差异全部收敛到
+ * {@link DirNode} 适配器（{@link FileNode} / {@link DocumentNode}）中。
  */
 public final class FileScanner {
+
+    /** 目录递归最大深度，防止异常深的目录树拖垮扫描。 */
+    private static final int MAX_DEPTH = 32;
 
     private static final Set<String> SKIP_DIRS = new HashSet<>(Arrays.asList(
             "android", "android/data", "android/obb", ".thumbnails", ".git", "node_modules",
@@ -72,7 +79,7 @@ public final class FileScanner {
         try {
             File root = Environment.getExternalStorageDirectory();
             if (root != null && root.isDirectory()) {
-                walkFile(root, enabled, items, 0, onProgress);
+                walk(new FileNode(root), enabled, items, 0, onProgress);
             }
         } catch (Throwable ignored) {
         }
@@ -82,7 +89,7 @@ public final class FileScanner {
                 Uri uri = Uri.parse(uriStr);
                 DocumentFile tree = DocumentFile.fromTreeUri(context, uri);
                 if (tree != null && tree.exists()) {
-                    walkDocument(context, tree, enabled, items, 0, onProgress);
+                    walk(new DocumentNode(tree), enabled, items, 0, onProgress);
                 }
             } catch (Throwable ignored) {
             }
@@ -91,50 +98,125 @@ public final class FileScanner {
         return items;
     }
 
-    private static void walkFile(File dir, Set<String> enabled, List<ScanItem> out, int depth,
-                                  Consumer<Integer> onProgress) {
-        if (depth > 32) return;
-        File[] children = dir.listFiles();
-        if (children == null) return;
-        for (File f : children) {
-            if (f.isHidden()) continue;
-            if (f.isDirectory()) {
-                String lower = f.getName().toLowerCase(Locale.ROOT);
-                if (SKIP_DIRS.contains(lower)) continue;
-                walkFile(f, enabled, out, depth + 1, onProgress);
-            } else if (f.isFile()) {
-                FileType t = FileType.match(f.getName());
-                if (t != null && t.isEnabled(enabled)) {
-                    out.add(new FileScanItem(f, t.ext));
-                    if (onProgress != null) onProgress.accept(out.size());
+    /**
+     * 统一目录遍历：递归进入子目录，把命中启用类型的常规文件写入 {@code out}。
+     * 隐藏项（含点文件）与 {@link SKIP_DIRS} 命中目录跳过；超过 {@link MAX_DEPTH} 截断。
+     */
+    private static void walk(DirNode dir, Set<String> enabled, List<ScanItem> out, int depth,
+                             Consumer<Integer> onProgress) {
+        if (depth > MAX_DEPTH) return;
+        DirNode[] children = dir.children();
+        for (DirNode n : children) {
+            if (n.isHiddenOrDot()) continue;
+            if (n.isDir()) {
+                if (shouldSkipDir(n.name())) continue;
+                walk(n, enabled, out, depth + 1, onProgress);
+            } else if (n.isFile()) {
+                FileType t = matchEnabled(n.name(), enabled);
+                if (t != null) {
+                    out.add(n.toItem(t.ext));
+                    notifyProgress(out, onProgress);
                 }
             }
         }
     }
 
-    private static void walkDocument(Context ctx, DocumentFile dir, Set<String> enabled,
-                                      List<ScanItem> out, int depth,
-                                      Consumer<Integer> onProgress) {
-        if (depth > 32) return;
-        DocumentFile[] children = dir.listFiles();
-        if (children == null) return;
-        for (DocumentFile f : children) {
-            if (f == null) continue;
-            String name = f.getName();
-            if (name != null && name.startsWith(".")) continue;
-            if (f.isDirectory()) {
-                String lower = (name == null ? "" : name.toLowerCase(Locale.ROOT));
-                if (SKIP_DIRS.contains(lower)) continue;
-                walkDocument(ctx, f, enabled, out, depth + 1, onProgress);
-            } else if (f.isFile()) {
-                FileType t = FileType.match(name);
-                if (t != null && t.isEnabled(enabled)) {
-                    out.add(new DocumentScanItem(f, t.ext));
-                    if (onProgress != null) onProgress.accept(out.size());
-                }
-            }
-        }
+    /** 命中 {@link SKIP_DIRS}（大小写不敏感）则跳过该目录。 */
+    private static boolean shouldSkipDir(String name) {
+        return SKIP_DIRS.contains(name.toLowerCase(Locale.ROOT));
     }
+
+    /** 文件名命中启用类型时返回对应 {@link FileType}，否则 null。 */
+    private static FileType matchEnabled(String name, Set<String> enabled) {
+        FileType t = FileType.match(name);
+        return (t != null && t.isEnabled(enabled)) ? t : null;
+    }
+
+    private static void notifyProgress(List<ScanItem> out, Consumer<Integer> onProgress) {
+        if (onProgress != null) onProgress.accept(out.size());
+    }
+
+    // ---------------- 目录树节点抽象 ----------------
+
+    /**
+     * 抹平 {@link File} 与 {@link DocumentFile} 的目录遍历差异，
+     * 使两条扫描路径共用同一套 {@link #walk} 逻辑。
+     */
+    private interface DirNode {
+        String name();
+
+        boolean isDir();
+
+        boolean isFile();
+
+        /** 隐藏项/点文件判定：本地走 {@link File#isHidden()}，SAF 走「以 . 开头」。 */
+        boolean isHiddenOrDot();
+
+        /** 子节点（失败或为空时返回空数组，绝不为 null；实现需过滤空元素）。 */
+        DirNode[] children();
+
+        /** 将当前节点包装为扫描结果项。 */
+        ScanItem toItem(String ext);
+    }
+
+    private static final class FileNode implements DirNode {
+        private final File file;
+
+        FileNode(File file) {
+            this.file = file;
+        }
+
+        @Override public String name() { return file.getName(); }
+        @Override public boolean isDir() { return file.isDirectory(); }
+        @Override public boolean isFile() { return file.isFile(); }
+        @Override public boolean isHiddenOrDot() { return file.isHidden(); }
+
+        @Override public DirNode[] children() {
+            File[] cs = file.listFiles();
+            if (cs == null || cs.length == 0) return EMPTY_NODES;
+            DirNode[] ns = new DirNode[cs.length];
+            int i = 0;
+            for (File c : cs) {
+                if (c != null) ns[i++] = new FileNode(c);
+            }
+            return i == cs.length ? ns : Arrays.copyOf(ns, i);
+        }
+
+        @Override public ScanItem toItem(String ext) { return new FileScanItem(file, ext); }
+    }
+
+    private static final class DocumentNode implements DirNode {
+        private final DocumentFile doc;
+
+        DocumentNode(DocumentFile doc) {
+            this.doc = doc;
+        }
+
+        @Override public String name() {
+            String n = doc.getName();
+            return n == null ? "" : n;
+        }
+
+        @Override public boolean isDir() { return doc.isDirectory(); }
+        @Override public boolean isFile() { return doc.isFile(); }
+
+        @Override public boolean isHiddenOrDot() { return name().startsWith("."); }
+
+        @Override public DirNode[] children() {
+            DocumentFile[] cs = doc.listFiles();
+            if (cs == null || cs.length == 0) return EMPTY_NODES;
+            DirNode[] ns = new DirNode[cs.length];
+            int i = 0;
+            for (DocumentFile c : cs) {
+                if (c != null) ns[i++] = new DocumentNode(c);
+            }
+            return i == cs.length ? ns : Arrays.copyOf(ns, i);
+        }
+
+        @Override public ScanItem toItem(String ext) { return new DocumentScanItem(doc, ext); }
+    }
+
+    private static final DirNode[] EMPTY_NODES = new DirNode[0];
 
     // ---------------- 实现 ----------------
 

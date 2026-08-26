@@ -54,4 +54,15 @@ public final class StateNotifier {
             for (IndexController.Listener l : listeners) l.onStatus(snap);
         });
     }
+
+    /** 一次性投递状态 + 进度（先 status 后 progress）。 */
+    public void notifyAllState(@NonNull IndexController.State s) {
+        final IndexController.State snap = s;
+        mainHandler.post(() -> {
+            for (IndexController.Listener l : listeners) {
+                l.onStatus(snap);
+                l.onProgress(snap);
+            }
+        });
+    }
 }

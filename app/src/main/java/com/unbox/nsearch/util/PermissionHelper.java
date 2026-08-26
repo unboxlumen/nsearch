@@ -1,7 +1,6 @@
 package com.unbox.nsearch.util;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -25,8 +24,8 @@ import androidx.core.content.ContextCompat;
  */
 public final class PermissionHelper {
 
-    public static final int REQ_ALL_FILES = 1001;
-    public static final int REQ_READ = 1002;
+    private static final int REQ_ALL_FILES = 1001;
+    private static final int REQ_READ = 1002;
 
     /** 由宿主 Activity 实现以拿到「权限/跳转是否成功」的回调。 */
     public interface Callback {
@@ -130,11 +129,5 @@ public final class PermissionHelper {
                     Uri.parse("package:" + activity.getPackageName()));
         }
         return i;
-    }
-
-    /** 当前是否具备外部存储全量访问权（仅作查询，不发起任何跳转）。 */
-    public static boolean hasAllFilesAccess(Context ctx) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return true;
-        return Environment.isExternalStorageManager();
     }
 }

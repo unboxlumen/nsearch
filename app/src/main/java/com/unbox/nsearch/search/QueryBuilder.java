@@ -20,6 +20,10 @@ import java.util.List;
  */
 public final class QueryBuilder {
 
+    private static final float CONTENT_BOOST = 1.0f;
+    private static final float NAME_BOOST = 2.0f;
+    private static final int MIN_MATCH_FLOOR = 1;
+
     private QueryBuilder() {}
 
     /**
@@ -30,14 +34,17 @@ public final class QueryBuilder {
         BooleanQuery.Builder outer = new BooleanQuery.Builder();
         for (String term : terms) {
             BooleanQuery.Builder perTerm = new BooleanQuery.Builder();
-            perTerm.add(new BoostQuery(new TermQuery(new Term(LuceneManager.Fields.CONTENT, term)), 1.0f),
-                    BooleanClause.Occur.SHOULD);
-            perTerm.add(new BoostQuery(new TermQuery(new Term(LuceneManager.Fields.NAME, term)), 2.0f),
-                    BooleanClause.Occur.SHOULD);
+            addShould(perTerm, LuceneManager.Fields.CONTENT, term, CONTENT_BOOST);
+            addShould(perTerm, LuceneManager.Fields.NAME, term, NAME_BOOST);
             outer.add(perTerm.build(), BooleanClause.Occur.SHOULD);
         }
         outer.setMinimumNumberShouldMatch(minShouldMatch);
         return outer.build();
+    }
+
+    private static void addShould(BooleanQuery.Builder b, String field, String term, float boost) {
+        b.add(new BoostQuery(new TermQuery(new Term(field, term)), boost),
+                BooleanClause.Occur.SHOULD);
     }
 
     /**
@@ -50,10 +57,10 @@ public final class QueryBuilder {
             case STRICT:
                 return termCount;
             case LOOSE:
-                return 1;
+                return MIN_MATCH_FLOOR;
             case MEDIUM:
             default:
-                return Math.max(1, termCount - 1);
+                return Math.max(MIN_MATCH_FLOOR, termCount - 1);
         }
     }
 

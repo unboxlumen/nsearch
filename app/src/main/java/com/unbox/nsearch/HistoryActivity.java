@@ -88,7 +88,7 @@ public class HistoryActivity extends AppCompatActivity implements IndexControlle
     protected void onResume() {
         super.onResume();
         // 加载历史
-        List<ScanRecord> records = IndexDatabase.get(this).getAllScanRecords();
+        List<ScanRecord> records = IndexDatabase.get(this).scanHistory().getAll();
         adapter.setItems(records);
         // 注册 controller 监听,这样首页运行中的索引能实时反映到这里
         controller.addListener(this);
@@ -97,8 +97,7 @@ public class HistoryActivity extends AppCompatActivity implements IndexControlle
         adapter.updateRunning(s);
         applyToolbarState(s);
         // 空态文案(只在没有任何历史且没有正在运行的任务时显示)
-        boolean showEmpty = records.isEmpty() && (s.status != IndexController.Status.RUNNING
-                && s.status != IndexController.Status.PAUSED);
+        boolean showEmpty = records.isEmpty() && !s.status.isActive();
         emptyView.setVisibility(showEmpty ? View.VISIBLE : View.GONE);
         emptyView.setText(R.string.empty_history);
     }
@@ -116,12 +115,11 @@ public class HistoryActivity extends AppCompatActivity implements IndexControlle
      */
     private void applyToolbarState(@NonNull IndexController.State s) {
         if (activeGroup == null || idleIcon == null) return;
-        boolean active = s.status == IndexController.Status.RUNNING
-                || s.status == IndexController.Status.PAUSED;
+        boolean active = s.status.isActive();
         if (active) {
             activeGroup.setVisibility(View.VISIBLE);
             idleIcon.setVisibility(View.GONE);
-            int pct = s.total > 0 ? (int) (s.indexed * 100L / s.total) : 0;
+            int pct = s.percent();
             if (ring != null) ring.setProgress(pct);
             if (ringPct != null) ringPct.setText(pct + "%");
         } else {
@@ -134,12 +132,15 @@ public class HistoryActivity extends AppCompatActivity implements IndexControlle
 
     @Override
     public void onProgress(@NonNull IndexController.State s) {
-        if (adapter != null) adapter.updateRunning(s);
-        applyToolbarState(s);
+        onStateChanged(s);
     }
 
     @Override
     public void onStatus(@NonNull IndexController.State s) {
+        onStateChanged(s);
+    }
+
+    private void onStateChanged(@NonNull IndexController.State s) {
         if (adapter != null) adapter.updateRunning(s);
         applyToolbarState(s);
     }

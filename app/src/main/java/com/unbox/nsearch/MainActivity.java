@@ -49,25 +49,21 @@ public class MainActivity extends AppCompatActivity
         implements SearchResultAdapter.OnItemClick,
         PermissionHelper.Callback {
 
+    /** 单次搜索最多返回的结果数。 */
+    private static final int MAX_RESULTS = 200;
+
     private IndexController controller;
     private Settings settings;
     private LuceneManager km;
     private SearchResultAdapter adapter;
 
-    // ═══ 搜索区视图 ═══
-    private EditText searchBox;
-    private ImageView btnClear;
-    private ImageButton btnAdvanced;
-
     // ═══ 结果区视图 ═══
     private TextView resultCount;
     private TextView emptyView;
     private View errorView;
-    private View btnRetry;
     private RecyclerView results;
 
     // ═══ 业务子控制器 ═══
-    private SearchBoxController searchBoxController;
     private IndexProgressCard progressCard;
     private PermissionHelper permissionHelper;
 
@@ -86,9 +82,9 @@ public class MainActivity extends AppCompatActivity
         settings = new Settings(this);
 
         // ── 绑定搜索区 ──
-        searchBox = findViewById(R.id.searchBox);
-        btnClear = findViewById(R.id.btnClear);
-        btnAdvanced = findViewById(R.id.btnAdvanced);
+        EditText searchBox = findViewById(R.id.searchBox);
+        ImageView btnClear = findViewById(R.id.btnClear);
+        ImageButton btnAdvanced = findViewById(R.id.btnAdvanced);
         // 放大镜 icon 也可点击触发搜索(兜底:键盘回车失败时用户仍有入口)
         View btnSearch = findViewById(R.id.btnSearch);
         if (btnSearch != null) btnSearch.setOnClickListener(v -> {
@@ -102,13 +98,13 @@ public class MainActivity extends AppCompatActivity
         resultCount = findViewById(R.id.resultCount);
         emptyView = findViewById(R.id.emptyView);
         errorView = findViewById(R.id.errorView);
-        btnRetry = findViewById(R.id.btnRetry);
+        View btnRetry = findViewById(R.id.btnRetry);
         btnRetry.setOnClickListener(v -> retrySearch());
 
         // ── 结果列表 ──
         results = findViewById(R.id.results);
         results.setLayoutManager(new LinearLayoutManager(this));
-        results.addItemDecoration(new SpaceItemDecoration(8, 0, this));
+        results.addItemDecoration(new SpaceItemDecoration(SpaceItemDecoration.ITEM_GAP_DP, 0, this));
         adapter = new SearchResultAdapter(this);
         results.setAdapter(adapter);
 
@@ -123,7 +119,8 @@ public class MainActivity extends AppCompatActivity
         // ── 子控制器 ──
         permissionHelper = new PermissionHelper(this, this);
 
-        searchBoxController = new SearchBoxController(searchBox, btnClear, this::runSearch);
+        // SearchBoxController 在构造时即完成监听绑定,无需持有引用
+        new SearchBoxController(searchBox, btnClear, this::runSearch);
 
         // progressCard 需要绑定工具栏上的 ring / action 视图,
         // 而菜单是在 onCreateOptionsMenu 才 inflate 的,这里先保留 null,
@@ -152,11 +149,9 @@ public class MainActivity extends AppCompatActivity
             // 点击空闲态(已索引 N 徽章):直接请求索引
             indexProgressAction.setOnClickListener(v -> {
                 // 先 toast 出当前状态,便于调试和确认流程
-                Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
+                showDebugToast();
                 IndexController.State s = controller.getState();
-                boolean active = s.status == IndexController.Status.RUNNING
-                        || s.status == IndexController.Status.PAUSED;
-                if (active) {
+                if (s.status.isActive()) {
                     toggleIndexDetail();
                 } else {
                     requestIndexFromToolbar();
@@ -179,7 +174,7 @@ public class MainActivity extends AppCompatActivity
                 },
                 new IndexProgressCard.ResultCountFormatter() {
                     @NonNull @Override public String formatIdle() { return indexedInfo(); }
-                    @Override public int formatIdleCount() { return indexedFileCount(); }
+                    @Override public int formatIdleCount() { return indexedCount(); }
                     @NonNull @Override public String formatActive(int indexed, int total, @Nullable String currentFile) {
                         // 活跃态:实时显示「已索引 N / M · 当前文件:foo」
                         StringBuilder sb = new StringBuilder();
@@ -214,7 +209,7 @@ public class MainActivity extends AppCompatActivity
         final String q = lastQuery;
         SearchExecutor.get().submit(() -> {
             try {
-                List<SearchResult> res = SearchEngine.search(MainActivity.this, km, q, settings, 200);
+                List<SearchResult> res = SearchEngine.search(MainActivity.this, km, q, settings, MAX_RESULTS);
                 SearchExecutor.get().postToMain(() -> showResults(res, q));
             } catch (Exception e) {
                 SearchExecutor.get().postToMain(() -> {
@@ -270,14 +265,14 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @NonNull
-    private String indexedInfo() {
-        int n = (km != null) ? km.docCount() : IndexDatabase.get(this).countDone();
-        return getString(R.string.files_total, n);
+    /** 当前已索引文件数（优先读 Lucene 实时计数，不可用时回退 DB）。 */
+    private int indexedCount() {
+        return (km != null) ? km.docCount() : IndexDatabase.get(this).fileMeta().countDone();
     }
 
-    private int indexedFileCount() {
-        return (km != null) ? km.docCount() : IndexDatabase.get(this).countDone();
+    @NonNull
+    private String indexedInfo() {
+        return getString(R.string.files_total, indexedCount());
     }
 
     // ---------------- 索引控制 ----------------
@@ -291,7 +286,7 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(this, R.string.toast_index_paused, Toast.LENGTH_SHORT).show();
         }
         // 再 toast 一次当前状态作为确认
-        Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
+        showDebugToast();
     }
 
     private void toggleIndexDetail() {
@@ -307,12 +302,16 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void cancelIndex() {
-        IndexController.State s = controller.getState();
-        if (s.status == IndexController.Status.RUNNING || s.status == IndexController.Status.PAUSED) {
+        if (controller.getState().status.isActive()) {
             controller.cancel();
             Toast.makeText(this, R.string.index_cancelled, Toast.LENGTH_SHORT).show();
         }
         // 再 toast 一次当前状态作为确认
+        showDebugToast();
+    }
+
+    /** 把当前索引状态拍成一行 toast，便于调试和确认流程。 */
+    private void showDebugToast() {
         Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
     }
 
@@ -322,7 +321,7 @@ public class MainActivity extends AppCompatActivity
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_index) {
-            Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
+            showDebugToast();
             if (controller.getState().status == IndexController.Status.RUNNING) {
                 Toast.makeText(this, R.string.toast_index_already_running, Toast.LENGTH_SHORT).show();
             } else {
@@ -359,7 +358,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onGranted() {
         controller.requestStart();
-        Toast.makeText(this, controller.debugSnapshot(), Toast.LENGTH_SHORT).show();
+        showDebugToast();
     }
 
     @Override

@@ -99,34 +99,15 @@ public final class IndexPipeline {
         // 立刻 toast 一次「扫描中」,让用户知道已收到请求
         toast("开始扫描…");
 
-        // 扫描期间按节流策略 toast:每 200 个文件 / 每 1 秒一次
-        final long[] lastScanToastMs = {0L};
-        final int[] lastScanToastCount = {0};
-        java.util.function.Consumer<Integer> scanProgress = count -> {
-            long now = System.currentTimeMillis();
-            if (count - lastScanToastCount[0] >= 200 || now - lastScanToastMs[0] >= 1000) {
-                lastScanToastCount[0] = count;
-                lastScanToastMs[0] = now;
-                toast("扫描中…已发现 " + count + " 个候选文件");
-            }
-        };
-        List<FileScanner.ScanItem> items = safeScan(settings, scanProgress);
-        synchronized (state) {
-            state.total = items.size();
-        }
-        notifier.notifyProgress(state);
-        toast("扫描完成,共 " + items.size() + " 个候选文件,开始索引");
+        List<FileScanner.ScanItem> items = scanPhase(settings);
 
-        int indexed = 0;
         int skipped = 0;
-        int failed = 0;
-        final int[] lastToastAt = {0}; // 上一次 toast 时的 indexed 数
+        IndexToastThrottle toastThrottle = new IndexToastThrottle();
+        Cadence cadence = new Cadence(COMMIT_EVERY, NOTIFY_EVERY);
 
-        LuceneManager km = null;
-        IncrementalSync sync = null;
         try {
-            km = LuceneManager.get(appCtx);
-            sync = new IncrementalSync(km, fileDao);
+            LuceneManager km = LuceneManager.get(appCtx);
+            IncrementalSync sync = new IncrementalSync(km, fileDao);
             int charLimit = settings.getCharLimit();
             Set<String> seen = IncrementalSync.newSeenSet();
 
@@ -145,41 +126,29 @@ public final class IndexPipeline {
                     }
                     skipped++;
                     notifier.notifyProgress(state);
-                    maybeToastByCount(state.indexed, lastToastAt);
+                    toastIfDue(toastThrottle);
                     continue;
                 }
 
                 indexOne(km, fileDao, item, charLimit);
 
                 synchronized (state) {
-                    if (state.failed > failed) {
-                        failed = state.failed;
-                    }
                     state.indexed++;
                     state.currentFile = item.getName();
                 }
-                indexed++;
 
-                if (state.indexed % COMMIT_EVERY == 0) {
-                    km.commit();
-                    km.maybeRefresh();
+                if (cadence.shouldCommit(state.indexed)) {
+                    km.commitAndRefresh();
                 }
-                if (state.indexed % NOTIFY_EVERY == 0) {
+                if (cadence.shouldNotify(state.indexed)) {
                     notifier.notifyProgress(state);
                 }
-                maybeToastByCount(state.indexed, lastToastAt);
+                toastIfDue(toastThrottle);
             }
 
-            if (km != null) {
-                km.commit();
-                km.maybeRefresh();
-            }
-
-            if (km != null) sync.cleanupDeleted(seen);
-            if (km != null) {
-                km.commit();
-                km.maybeRefresh();
-            }
+            km.commitAndRefresh();
+            sync.cleanupDeleted(seen);
+            km.commitAndRefresh();
         } catch (Throwable t) {
             ErrorReporter.report("IndexPipeline.run", t);
         } finally {
@@ -188,45 +157,61 @@ public final class IndexPipeline {
                 state.status = cancelled.get() ? IndexController.Status.CANCELLED : IndexController.Status.DONE;
                 state.endTime = end;
             }
+            // 一次性投递最终状态与进度（先 status 后 progress，等价于 StateNotifier.notifyAllState）
             notifier.notifyStatus(state);
             notifier.notifyProgress(state);
         }
 
-        int total = state.indexed;
-        int indexedForHistory = Math.max(0, total - skipped);
+        return persistHistory(start, items.size(), skipped);
+    }
+
+    /**
+     * 扫描阶段：按节流策略 toast、刷新 {@code state.total}，返回候选文件列表。
+     */
+    @NonNull
+    private List<FileScanner.ScanItem> scanPhase(@NonNull Settings settings) {
+        // 扫描期间按节流策略 toast:每 200 个文件 / 每 1 秒一次
+        ScanToastThrottle throttle = new ScanToastThrottle();
+        List<FileScanner.ScanItem> items = safeScan(settings, count -> {
+            if (throttle.shouldToast(count, System.currentTimeMillis())) {
+                toast("扫描中…已发现 " + count + " 个候选文件");
+            }
+        });
+        synchronized (state) {
+            state.total = items.size();
+        }
+        notifier.notifyProgress(state);
+        toast("扫描完成,共 " + items.size() + " 个候选文件,开始索引");
+        return items;
+    }
+
+    /**
+     * 把本轮结果写入 {@code scan_history}，返回对应 {@link ScanRecord}（失败时返回近似值兜底）。
+     */
+    @NonNull
+    private ScanRecord persistHistory(long start, int scanned, int skipped) {
+        int indexedForHistory = Math.max(0, state.indexed - skipped);
         long end = System.currentTimeMillis();
         try {
-            ScanRecord rec = new ScanRecord(start, end, items.size(),
+            ScanRecord rec = new ScanRecord(start, end, scanned,
                     indexedForHistory, state.failed, skipped,
                     end - start, "manual");
-            db.scanHistory().insert(rec);
+            IndexDatabase.get(appCtx).scanHistory().insert(rec);
             return rec;
         } catch (Throwable t) {
             ErrorReporter.report("IndexPipeline.run:history", t);
-            return new ScanRecord(start, end, items.size(),
+            return new ScanRecord(start, end, scanned,
                     indexedForHistory, state.failed, skipped,
                     end - start, "manual");
         }
     }
 
     /**
-     * 根据当前已处理文件数按「前 100 个每 50 个、之后每 500 个」的策略决定是否 toast。
-     * 每次 toast 后更新 {@code lastToastAt[0]}。
+     * 按 {@link IndexToastThrottle} 策略决定是否 toast 一次「已索引 N 个」。
      */
-    private void maybeToastByCount(int currentIndexed, int[] lastToastAt) {
-        int last = lastToastAt[0];
-        if (currentIndexed <= TOAST_EARLY_RANGE) {
-            // 前 100 个:每 50 个 toast,但要在到达时 toast(50, 100)
-            if (currentIndexed > 0 && currentIndexed % TOAST_EARLY == 0 && currentIndexed != last) {
-                toast("已索引 " + currentIndexed + " 个");
-                lastToastAt[0] = currentIndexed;
-            }
-        } else {
-            // 越过 100 后:每 500 个 toast,但要比 lastToastAt 多 TOAST_LATE 个
-            if (currentIndexed - last >= TOAST_LATE) {
-                toast("已索引 " + currentIndexed + " 个");
-                lastToastAt[0] = currentIndexed;
-            }
+    private void toastIfDue(@NonNull IndexToastThrottle throttle) {
+        if (throttle.shouldToast(state.indexed)) {
+            toast("已索引 " + state.indexed + " 个");
         }
     }
 
@@ -323,6 +308,78 @@ public final class IndexPipeline {
                     return;
                 }
             }
+        }
+    }
+
+    // ---------------- 节流 / 节奏策略 ----------------
+
+    /**
+     * 提交/刷新节奏：每处理 {@code commitEvery} 个文件 commit + refresh 一次，
+     * 每处理 {@code notifyEvery} 个文件向 UI 投递一次进度（避免主线程被通知淹没）。
+     */
+    static final class Cadence {
+        private final int commitEvery;
+        private final int notifyEvery;
+
+        Cadence(int commitEvery, int notifyEvery) {
+            this.commitEvery = commitEvery;
+            this.notifyEvery = notifyEvery;
+        }
+
+        boolean shouldCommit(int processed) {
+            return processed % commitEvery == 0;
+        }
+
+        boolean shouldNotify(int processed) {
+            return processed % notifyEvery == 0;
+        }
+    }
+
+    /**
+     * 扫描阶段 toast 节流：每累计 {@link #COUNT_STEP} 个文件、或距上次 toast 超过
+     * {@link #TIME_STEP_MS} 毫秒，才放行一次。
+     */
+    static final class ScanToastThrottle {
+        static final int COUNT_STEP = 200;
+        static final long TIME_STEP_MS = 1000;
+
+        private int lastCount;
+        private long lastMs;
+
+        boolean shouldToast(int count, long nowMs) {
+            if (count - lastCount >= COUNT_STEP || nowMs - lastMs >= TIME_STEP_MS) {
+                lastCount = count;
+                lastMs = nowMs;
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * 索引阶段 toast 节流：前 {@link IndexPipeline#TOAST_EARLY_RANGE} 个文件内
+     * 每 {@link IndexPipeline#TOAST_EARLY} 个 toast 一次，越过之后每
+     * {@link IndexPipeline#TOAST_LATE} 个 toast 一次。
+     */
+    static final class IndexToastThrottle {
+        private int lastToastAt;
+
+        boolean shouldToast(int currentIndexed) {
+            if (currentIndexed <= TOAST_EARLY_RANGE) {
+                // 前 100 个:每 50 个 toast,但要在到达时 toast(50, 100)
+                if (currentIndexed > 0 && currentIndexed % TOAST_EARLY == 0
+                        && currentIndexed != lastToastAt) {
+                    lastToastAt = currentIndexed;
+                    return true;
+                }
+            } else {
+                // 越过 100 后:每 500 个 toast,但要比 lastToastAt 多 TOAST_LATE 个
+                if (currentIndexed - lastToastAt >= TOAST_LATE) {
+                    lastToastAt = currentIndexed;
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

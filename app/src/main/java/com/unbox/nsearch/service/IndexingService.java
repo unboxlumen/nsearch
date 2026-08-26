@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.Looper;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.ServiceCompat;
 
 import com.unbox.nsearch.IndexController;
 import com.unbox.nsearch.R;
@@ -26,6 +27,8 @@ public class IndexingService extends Service {
     public static final String ACTION_START = "com.unbox.nsearch.action.START";
     private static final int NOTIF_ID = 1001;
     private static final String CHANNEL_ID = "nsearch_indexing";
+    /** 通知刷新间隔（毫秒）。 */
+    private static final long TICKER_INTERVAL_MS = 500L;
 
     private NotificationManager nm;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -63,10 +66,14 @@ public class IndexingService extends Service {
             @Override
             public void run() {
                 if (nm != null) nm.notify(NOTIF_ID, buildNotification());
-                handler.postDelayed(this, 500);
+                handler.postDelayed(this, TICKER_INTERVAL_MS);
             }
         };
-        handler.postDelayed(ticker, 500);
+        handler.postDelayed(ticker, TICKER_INTERVAL_MS);
+    }
+
+    private void stopTicker() {
+        if (ticker != null) handler.removeCallbacks(ticker);
     }
 
     private Notification buildNotification() {
@@ -85,15 +92,15 @@ public class IndexingService extends Service {
 
     /** 由 IndexController 在索引结束后调用，停止前台并结束服务。 */
     public void stopForegroundService() {
-        if (ticker != null) handler.removeCallbacks(ticker);
-        stopForeground(true);
+        stopTicker();
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE);
         stopSelf();
     }
 
     @Override
     public void onDestroy() {
         IndexController.get(this).clearHost(this);
-        if (ticker != null) handler.removeCallbacks(ticker);
+        stopTicker();
         super.onDestroy();
     }
 

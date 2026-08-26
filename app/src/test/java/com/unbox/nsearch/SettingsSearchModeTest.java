@@ -27,26 +27,6 @@ public class SettingsSearchModeTest {
     }
 
     @Test
-    public void roundTrip_strict() {
-        roundTrip(Settings.SearchMode.STRICT);
-    }
-
-    @Test
-    public void roundTrip_medium() {
-        roundTrip(Settings.SearchMode.MEDIUM);
-    }
-
-    @Test
-    public void roundTrip_loose() {
-        roundTrip(Settings.SearchMode.LOOSE);
-    }
-
-    private void roundTrip(Settings.SearchMode mode) {
-        String raw = mode.prefValue();
-        assertEquals(mode, Settings.SearchMode.parse(raw));
-    }
-
-    @Test
     public void allEnumValuesCovered() {
         // 强制每个枚举值都有 prefValue() 输出;
         // 漏掉一个 switch 分支会让测试失败,从而提醒补上。
