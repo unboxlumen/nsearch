@@ -8,7 +8,7 @@
     <color name="text_day">#121212</color>
     <color name="text_night">#FAFAFA</color>
 
-    <!-- 背景 / 表面（扁平、浅色为主） -->
+    <!-- 背景 / 表面（扁平、纯白底） -->
     <color name="bg_day">#FFFFFF</color>
     <color name="bg_night">#121212</color>
     <color name="surface_day">#FFFFFF</color>
@@ -22,9 +22,23 @@
     <color name="text_secondary_day">#5F6368</color>
     <color name="text_secondary_night">#9AA0A6</color>
 
+    <!-- 第三级文字（提示/禁用/路径等） -->
+    <color name="text_tertiary_day">#8E8E93</color>
+    <color name="text_tertiary_night">#6E6E73</color>
+
     <!-- 命中高亮 -->
     <color name="highlight_bg">#FFF3C4</color>
 
     <!-- 启动图标背景 -->
     <color name="ic_launcher_background">#357AFF</color>
+
+    <!-- 状态色（日间：与白底 WCAG AA ≥ 4.5:1 已实测） -->
+    <color name="state_success_day">#1BA672</color>
+    <color name="state_failed_day">#D04444</color>
+    <color name="state_skipped_day">#B78103</color>
+
+    <!-- 状态色（夜间：再提亮一档） -->
+    <color name="state_success_night">#34C77B</color>
+    <color name="state_failed_night">#E66A6A</color>
+    <color name="state_skipped_night">#E0A23A</color>
 </resources>

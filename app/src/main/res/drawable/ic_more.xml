@@ -1,0 +1,8 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="1024" android:viewportHeight="1024">
+    <!-- 三点溢出菜单图标（24dp / 1024 视口 / 实心）。
+         三点圆点居中均匀分布，遵循 §12.3「非正方形形状保持宽高比，居中于画布」 -->
+    <path android:fillColor="?attr/colorText"
+        android:pathData="M512 405.333333a106.666667 106.666667 0 1 1 0 213.333334 106.666667 106.666667 0 0 1 0-213.333334zM170.666667 405.333333a106.666667 106.666667 0 1 1 0 213.333334 106.666667 106.666667 0 0 1 0-213.333334zM853.333333 405.333333a106.666667 106.666667 0 1 1 0 213.333334 106.666667 106.666667 0 0 1 0-213.333334z" />
+</vector>

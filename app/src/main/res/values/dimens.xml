@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 基准 8dp 网格（细节 4dp）；所有 layout 引用这里的 token，禁止散落魔法数字。
+         见 UI_DESIGN_GUIDE.md §2 / §6 -->
+    <dimen name="space_xxs">2dp</dimen>
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_md">12dp</dimen>
+    <dimen name="space_lg">16dp</dimen>
+    <dimen name="space_xl">20dp</dimen>
+    <dimen name="space_2xl">24dp</dimen>
+    <dimen name="space_3xl">32dp</dimen>
+
+    <!-- 圆角 -->
+    <dimen name="radius_input">12dp</dimen>
+    <dimen name="radius_card">16dp</dimen>
+    <dimen name="radius_chip">100dp</dimen>
+    <dimen name="radius_badge">100dp</dimen>
+
+    <!-- 描边 / 高 -->
+    <dimen name="stroke_thin">1dp</dimen>
+    <dimen name="appbar_height">56dp</dimen>
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="touch_target_compact">40dp</dimen>
+
+    <!-- 列表（项间距 + 末项补底） -->
+    <dimen name="list_item_gap">12dp</dimen>
+    <dimen name="list_bottom_extra">24dp</dimen>
+
+    <!-- AppBar 进度条 -->
+    <dimen name="appbar_progress_height">2dp</dimen>
+
+    <!-- 字号阶梯 -->
+    <dimen name="text_title">22sp</dimen>
+    <dimen name="text_section">14sp</dimen>
+    <dimen name="text_body">15sp</dimen>
+    <dimen name="text_meta">13sp</dimen>
+    <dimen name="text_badge">11sp</dimen>
+</resources>

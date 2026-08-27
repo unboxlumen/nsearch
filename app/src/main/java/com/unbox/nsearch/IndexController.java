@@ -11,6 +11,7 @@ import com.unbox.nsearch.index.IndexPipeline;
 import com.unbox.nsearch.index.StateNotifier;
 import com.unbox.nsearch.service.IndexingService;
 
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -179,6 +180,10 @@ public final class IndexController {
                 km.commit();
                 km.maybeRefresh();
             } catch (Exception ignored) {
+                // 索引损坏打不开时：物理删除索引目录并重置单例，下次 get() 自动新建全新索引。
+                File dir = appCtx.getDir("lucene_index", Context.MODE_PRIVATE);
+                deleteRecursively(dir);
+                LuceneManager.resetInstance();
             }
             com.unbox.nsearch.db.IndexDatabase.get(appCtx).fileMeta().clear();
             synchronized (state) {
@@ -191,6 +196,18 @@ public final class IndexController {
             }
             notifier.notifyAllState(state);
         });
+    }
+
+    private static void deleteRecursively(File f) {
+        if (f == null || !f.exists()) return;
+        if (f.isDirectory()) {
+            File[] children = f.listFiles();
+            if (children != null) {
+                for (File c : children) deleteRecursively(c);
+            }
+        }
+        //noinspection ResultOfMethodCallIgnored
+        f.delete();
     }
 
     // ---------------- 执行 ----------------

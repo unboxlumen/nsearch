@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- ═══════════ 文字层级（Type Scale）═══════════ -->
+    <!-- 单一字阶：所有 layout 都引用这里，禁止 textSize 散落。
+         数字 > 字重 > 颜色 > 大小 > 阴影（UI_DESIGN_GUIDE.md §3） -->
+
+    <style name="TextAppearance.NSearch.Title" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">@dimen/text_title</item>
+        <item name="android:textColor">?attr/colorText</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.NSearch.Section" parent="TextAppearance.MaterialComponents.Subtitle2">
+        <item name="android:textSize">@dimen/text_section</item>
+        <item name="android:textColor">?attr/colorText</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.0</item>
+    </style>
+
+    <style name="TextAppearance.NSearch.Body" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textColor">?attr/colorText</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:letterSpacing">0.0</item>
+    </style>
+
+    <style name="TextAppearance.NSearch.Meta" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textSize">@dimen/text_meta</item>
+        <item name="android:textColor">?android:attr/textColorSecondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:letterSpacing">0.0</item>
+    </style>
+
+    <style name="TextAppearance.NSearch.Tertiary" parent="TextAppearance.NSearch.Meta">
+        <item name="android:textColor">?attr/colorTextTertiary</item>
+    </style>
+
+    <style name="TextAppearance.NSearch.Badge" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">@dimen/text_badge</item>
+        <item name="android:textColor">?attr/colorText</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <!-- ═══════════ 控件样式（Widget）═══════════ -->
+
+    <!-- 工具栏：去掉默认阴影，底边 1dp 描边替代阴影做层级（§6 扁平）。 -->
+    <style name="Widget.NSearch.Toolbar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">?attr/colorSurface</item>
+        <item name="titleTextColor">?attr/colorText</item>
+        <item name="navigationIconTint">?attr/colorText</item>
+        <item name="titleTextAppearance">@style/TextAppearance.NSearch.Title</item>
+        <item name="android:elevation">0dp</item>
+    </style>
+
+    <!-- 卡片：elevation=0 + 1dp 描边 + 16dp 圆角 -->
+    <style name="Widget.NSearch.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardElevation">0dp</item>
+        <item name="cardCornerRadius">@dimen/radius_card</item>
+        <item name="cardBackgroundColor">?attr/colorSurface</item>
+        <item name="strokeColor">?attr/colorOutline</item>
+        <item name="strokeWidth">@dimen/stroke_thin</item>
+    </style>
+
+    <!-- 输入框：圆角 12dp，1dp 描边替代下划线 -->
+    <style name="Widget.NSearch.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeWidth">@dimen/stroke_thin</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_input</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_input</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_input</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_input</item>
+        <item name="boxStrokeColor">?attr/colorPrimary</item>
+    </style>
+
+    <!-- Chip：扁平、选中态用主色填充 -->
+    <style name="Widget.NSearch.Chip" parent="Widget.MaterialComponents.Chip.Filter">
+        <item name="chipBackgroundColor">@color/chip_background</item>
+        <item name="chipStrokeColor">?attr/colorOutline</item>
+        <item name="chipStrokeWidth">@dimen/stroke_thin</item>
+        <item name="android:textColor">@color/chip_text</item>
+        <item name="chipCornerRadius">@dimen/radius_chip</item>
+        <item name="chipMinHeight">36dp</item>
+        <item name="chipIconVisible">false</item>
+    </style>
+
+    <!-- Pill 按钮：全圆（圆角 ≥ 高度/2）、描边、无填充；用于暂停 / 取消等次级动作 -->
+    <style name="Widget.NSearch.PillButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:textAllCaps">false</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">@dimen/text_meta</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">22dp</item>
+        <item name="strokeWidth">@dimen/stroke_thin</item>
+        <item name="strokeColor">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="rippleColor">@color/ripple_primary</item>
+        <item name="iconTint">?attr/colorPrimary</item>
+        <item name="iconPadding">@dimen/space_sm</item>
+        <item name="iconSize">16dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:minHeight">@dimen/touch_target_compact</item>
+    </style>
+
+    <!-- 状态徽章：pill 形状，按 state 切色 -->
+    <style name="Widget.NSearch.StatusBadge" parent="">
+        <item name="android:textSize">@dimen/text_badge</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:paddingStart">@dimen/space_sm</item>
+        <item name="android:paddingEnd">@dimen/space_sm</item>
+        <item name="android:paddingTop">@dimen/space_xxs</item>
+        <item name="android:paddingBottom">@dimen/space_xxs</item>
+        <item name="android:minHeight">22dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:background">@drawable/bg_status_badge</item>
+        <item name="android:textAlignment">center</item>
+    </style>
+
+</resources>

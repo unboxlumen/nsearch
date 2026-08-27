@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 索引入口视图（IndexIndicatorView 内部使用）：
+     - 空闲态：pill「已索引 N」+ ic_index
+     - 活跃态：环 + 中心百分比
+     高度 48dp，触控目标达标（§5）。 -->
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- 空闲态：pill 徽章 + 索引图标 -->
+    <LinearLayout
+        android:id="@+id/idleGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_md"
+        android:paddingEnd="@dimen/space_sm"
+        android:background="@drawable/bg_idle_badge">
+
+        <TextView
+            android:id="@+id/idleBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="20dp"
+            android:textAppearance="@style/TextAppearance.NSearch.Badge"
+            android:textColor="?attr/colorPrimary"
+            android:textSize="@dimen/text_meta"
+            android:gravity="center"
+            tools:ignore="HardcodedText"
+            android:text="0" />
+
+        <ImageView
+            android:id="@+id/idleIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="@dimen/space_sm"
+            android:src="@drawable/ic_index"
+            android:importantForAccessibility="no"
+            app:tint="?attr/colorPrimary" />
+    </LinearLayout>
+
+    <!-- 活跃态：环 + 中心百分比 -->
+    <FrameLayout
+        android:id="@+id/activeGroup"
+        android:layout_width="@dimen/touch_target"
+        android:layout_height="@dimen/touch_target"
+        android:visibility="gone">
+
+        <com.google.android.material.progressindicator.CircularProgressIndicator
+            android:id="@+id/ring"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:indeterminate="false"
+            app:indicatorSize="28dp"
+            app:trackThickness="3dp"
+            app:indicatorInset="0dp"
+            app:indicatorColor="?attr/colorPrimary"
+            app:trackColor="?attr/colorOutline" />
+
+        <TextView
+            android:id="@+id/ringPct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAppearance="@style/TextAppearance.NSearch.Badge"
+            android:textColor="?attr/colorText"
+            tools:ignore="HardcodedText"
+            android:text="0%" />
+    </FrameLayout>
+
+</merge>

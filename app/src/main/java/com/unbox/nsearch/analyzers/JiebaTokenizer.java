@@ -33,6 +33,20 @@ public final class JiebaTokenizer extends Tokenizer {
     private static final Object SEG_LOCK = new Object();
     private static final int READ_BUFFER_SIZE = 8192;
 
+    private static volatile boolean warmed = false;
+
+    /**
+     * 预热 jieba 词典（首次 process 才懒加载 dict，约 1-3s）。
+     * 在应用启动时后台调用一次，避免冷启动后第一次搜索卡顿。
+     */
+    public static void warmUp() {
+        synchronized (SEG_LOCK) {
+            if (warmed) return;
+            SEGMENTER.process("nsearch 预热搜索 warmup", JiebaSegmenter.SegMode.SEARCH);
+            warmed = true;
+        }
+    }
+
     private final List<Token> tokens = new ArrayList<>();
     private int cursor = 0;
 

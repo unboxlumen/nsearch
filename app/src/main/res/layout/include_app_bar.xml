@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 顶部 AppBar（大标题 + 索引入口）：被 MainActivity / HistoryActivity 共用。
+     大留白、单一主色按钮；运行中显示 LinearProgressIndicator（不挤占搜索区）。
+     见 UI_DESIGN_GUIDE.md §2 / §6。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/appBar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/appbar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_lg"
+        android:paddingEnd="@dimen/space_sm">
+
+        <TextView
+            android:id="@+id/appBarTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textAppearance="@style/TextAppearance.NSearch.Title"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:text="@string/app_name"
+            tools:ignore="UnusedAttribute" />
+
+        <!-- 索引入口：单点强调，点击展开详情 BottomSheet -->
+        <com.unbox.nsearch.ui.IndexIndicatorView
+            android:id="@+id/indexIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/touch_target"
+            android:layout_marginStart="@dimen/space_sm"
+            android:focusable="true"
+            android:clickable="true"
+            android:contentDescription="@string/cd_index_idle" />
+    </LinearLayout>
+
+    <!-- 底部 1dp 描边，替代阴影做层级（§2 扁平） -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/stroke_thin"
+        android:background="?attr/colorOutline" />
+
+    <!-- 索引中显示的细横条进度（隐藏态不占空间） -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/appBarProgress"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/appbar_progress_height"
+        android:visibility="gone"
+        android:indeterminate="false"
+        app:trackThickness="@dimen/appbar_progress_height"
+        app:indicatorColor="?attr/colorPrimary"
+        app:trackColor="@color/track_outline" />
+</LinearLayout>

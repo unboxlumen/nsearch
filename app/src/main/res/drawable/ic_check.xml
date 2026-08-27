@@ -1,0 +1,8 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="1024" android:viewportHeight="1024">
+    <!-- 历史徽章用对勾（24dp / 1024 视口 / 85.3 线宽 / ?attr/colorText 取色，
+         见 UI_DESIGN_GUIDE.md §12.2） -->
+    <path android:fillColor="?attr/colorText"
+        android:pathData="M426.666667 725.333333l-170.666667-170.666666a42.666667 42.666667 0 1 0-60.330667 60.330666l200.533334 200.533334a42.666667 42.666667 0 0 0 60.330666 0L853.333333 418.666667a42.666667 42.666667 0 0 0-60.330666-60.330667L426.666667 725.333333z" />
+</vector>

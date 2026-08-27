@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 选中态：白字（与主色填充对比） -->
+    <item android:state_checked="true" android:color="#FFFFFF" />
+    <!-- 默认：主文字色 -->
+    <item android:color="?attr/colorText" />
+</selector>

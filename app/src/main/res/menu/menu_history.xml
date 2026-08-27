@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 历史页菜单（极简风）：原工具栏进度环已删除，由主页 AppBar 进度条承担。
+     此处保留为单 menu 项以兼容 onCreateOptionsMenu 调用，但不再 inflate 任何 action。 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
-        android:id="@+id/action_history_progress"
-        android:title="@string/cd_history_progress"
-        app:actionLayout="@layout/history_toolbar_progress"
-        app:showAsAction="always" />
-</menu>
+    xmlns:app="http://schemas.android.com/apk/res-auto" />

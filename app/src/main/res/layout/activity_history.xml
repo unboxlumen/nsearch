@@ -1,37 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 历史页：使用共用 AppBar（去掉了原本右侧的进度环，过渡到主页 AppBar 进度条）。
+     列表与主页共用 SpaceItemDecoration(12dp, 24dp)。 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:fitsSystemWindows="true">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp" />
+    <include
+        android:id="@+id/appBarHeader"
+        layout="@layout/include_app_bar" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/historyList"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="0dp"
-        android:paddingBottom="0dp"
-        android:scrollbars="vertical" />
+        android:layout_weight="1">
 
-    <TextView
-        android:id="@+id/emptyView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:padding="24dp"
-        android:text="@string/empty_history"
-        android:visibility="gone" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/historyList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingStart="@dimen/space_lg"
+            android:paddingEnd="@dimen/space_lg"
+            android:paddingTop="@dimen/space_sm"
+            android:paddingBottom="@dimen/list_bottom_extra"
+            android:scrollbars="vertical" />
 
+        <com.unbox.nsearch.ui.EmptyStateView
+            android:id="@+id/emptyState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone" />
+    </FrameLayout>
 </LinearLayout>

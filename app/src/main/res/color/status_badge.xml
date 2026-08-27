@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 历史徽章背景：与成功 / 失败 / 跳过 三态切色（见 HistoryAdapter） -->
+    <item android:state_activated="true" android:color="?attr/colorStateSuccess" />
+    <item android:state_selected="true" android:color="?attr/colorStateFailed" />
+    <item android:color="?attr/colorStateSkipped" />
+</selector>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 历史徽章背景：成功 / 失败 / 跳过 由 ColorStateList 决定（见 color/status_badge.xml）。
+     pill 形状，高度由内容决定。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/status_badge" />
+    <corners android:radius="100dp" />
+</shape>

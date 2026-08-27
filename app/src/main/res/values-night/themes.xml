@@ -13,13 +13,20 @@
 
         <item name="colorText">@color/text_night</item>
         <item name="colorOutline">@color/outline_night</item>
+        <item name="colorTextTertiary">@color/text_tertiary_night</item>
 
-        <!-- 状态栏：与工具栏同色（深色），浅色文字，保证可读 -->
+        <item name="colorStateSuccess">@color/state_success_night</item>
+        <item name="colorStateFailed">@color/state_failed_night</item>
+        <item name="colorStateSkipped">@color/state_skipped_night</item>
+
+        <!-- 状态栏：与工具栏同色（深色），浅色文字 -->
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">false</item>
 
         <item name="android:textColorPrimary">@color/text_night</item>
         <item name="android:textColorSecondary">@color/text_secondary_night</item>
+
+        <item name="elevationOverlayEnabled">false</item>
 
         <item name="toolbarStyle">@style/Widget.NSearch.Toolbar</item>
         <item name="materialCardViewStyle">@style/Widget.NSearch.Card</item>

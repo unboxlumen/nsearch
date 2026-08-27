@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 索引进度详情 BottomSheet：替代旧底部固定卡片，不遮挡结果列表。
+     圆角顶部 24dp + 拖动把手 + 标题 + 副标题 + 当前文件 + 两个 pill 按钮。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/colorSurface"
+    android:paddingStart="@dimen/space_2xl"
+    android:paddingEnd="@dimen/space_2xl"
+    android:paddingTop="@dimen/space_md"
+    android:paddingBottom="@dimen/space_2xl">
+
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/space_lg"
+        android:background="?attr/colorOutline"
+        android:alpha="0.5" />
+
+    <TextView
+        android:id="@+id/sheetTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/index_detail_title"
+        android:textAppearance="@style/TextAppearance.NSearch.Title"
+        android:textSize="@dimen/text_section" />
+
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+        android:id="@+id/sheetProgress"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginTop="@dimen/space_lg"
+        app:trackThickness="4dp"
+        app:indicatorColor="?attr/colorPrimary"
+        app:trackColor="?attr/colorOutline" />
+
+    <TextView
+        android:id="@+id/sheetSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_sm"
+        android:textAppearance="@style/TextAppearance.NSearch.Meta" />
+
+    <TextView
+        android:id="@+id/sheetCurrent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:textAppearance="@style/TextAppearance.NSearch.Tertiary"
+        android:maxLines="1"
+        android:ellipsize="middle" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xl"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sheetPauseResume"
+            style="@style/Widget.NSearch.PillButton"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/touch_target_compact"
+            android:text="@string/index_detail_pause" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sheetCancel"
+            style="@style/Widget.NSearch.PillButton"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/touch_target_compact"
+            android:layout_marginStart="@dimen/space_sm"
+            android:text="@string/index_detail_cancel" />
+    </LinearLayout>
+</LinearLayout>

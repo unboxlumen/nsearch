@@ -50,6 +50,8 @@ public final class ResultBuilder {
                                            @NonNull IndexSearcher searcher,
                                            @NonNull TopDocs td) throws IOException {
         List<SearchResult> results = new ArrayList<>();
+        // 复用高亮组件（scorer/formatter/fragmenter 一次构造），避免每篇结果重建。
+        SnippetHighlighter highlighter = new SnippetHighlighter(analyzer, query);
         for (ScoreDoc sd : td.scoreDocs) {
             Document d = searcher.doc(sd.doc);
             String name = d.get(LuceneManager.Fields.NAME);
@@ -60,7 +62,7 @@ public final class ResultBuilder {
             long size = fieldLong(d, LuceneManager.Fields.SIZE);
             long modified = fieldLong(d, LuceneManager.Fields.MODIFIED);
             String snippet = d.get(LuceneManager.Fields.SNIPPET);
-            String html = SnippetHighlighter.build(analyzer, query, snippet);
+            String html = highlighter.build(snippet);
             FileType ft = FileType.match(name);
             String typeLabel = (ft != null) ? appContext.getString(ft.labelRes)
                     : appContext.getString(R.string.type_file);

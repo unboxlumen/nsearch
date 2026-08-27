@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 选中态：品牌色填充（与「严格 / 中等 / 宽松」行为一致） -->
+    <item android:state_checked="true" android:color="?attr/colorPrimary" />
+    <!-- 默认：白底 + 1dp 描边（在 chipStrokeColor 中体现） -->
+    <item android:color="?attr/colorSurface" />
+</selector>

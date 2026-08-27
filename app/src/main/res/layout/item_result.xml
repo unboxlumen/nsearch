@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-    <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- 结果项（item_result）极简风重构：
+     - 圆角 16dp / 1dp 描边 / elevation 0（§2 扁平）
+     - 单卡图标 24dp + 文件名 + 路径 + 类型·大小 + 摘要（命中高亮）
+     - 行尾 24dp 打开箭头（替代旧 48dp ImageButton，按下有 ripple）
+     - 触控区满宽，padding 16dp / 14dp（§6 列表行）
+     见 UI_DESIGN_GUIDE.md §6。 -->
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     style="?attr/materialCardViewStyle"
     android:layout_width="match_parent"
@@ -11,71 +17,75 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_lg"
+        android:paddingEnd="@dimen/space_md"
+        android:paddingTop="@dimen/space_md"
+        android:paddingBottom="@dimen/space_md">
 
-        <!-- ═══ 第一行：图标 + 文件名 + 日期/打开按钮 ═══ -->
+        <!-- 文件类型图标 -->
+        <ImageView
+            android:id="@+id/resultIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_file"
+            android:importantForAccessibility="no" />
+
+        <!-- 主区（弹性） -->
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:layout_marginStart="@dimen/space_md"
+            android:orientation="vertical">
 
-            <!-- 文件类型图标 -->
-            <ImageView
-                android:id="@+id/resultIcon"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_file"
-                android:importantForAccessibility="no" />
-
-            <!-- 文件名（主标题） -->
             <TextView
                 android:id="@+id/resultName"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="12dp"
-                android:textStyle="bold"
-                android:textSize="15sp"
-                android:textColor="?android:attr/textColorPrimary"
-                android:ellipsize="end"
-                android:maxLines="1" />
+                android:textAppearance="@style/TextAppearance.NSearch.Section"
+                android:singleLine="true"
+                android:ellipsize="end" />
 
-            <!-- 打开按钮 -->
-            <ImageButton
-                android:id="@+id/resultOpen"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:src="@drawable/ic_open"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/open_file" />
+            <TextView
+                android:id="@+id/resultPath"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="@style/TextAppearance.NSearch.Tertiary"
+                android:singleLine="true"
+                android:ellipsize="middle" />
+
+            <TextView
+                android:id="@+id/resultMeta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textAppearance="@style/TextAppearance.NSearch.Meta"
+                android:singleLine="true" />
+
+            <TextView
+                android:id="@+id/resultSnippet"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_sm"
+                android:textAppearance="@style/TextAppearance.NSearch.Body"
+                android:lineSpacingExtra="2dp"
+                android:maxLines="4"
+                android:ellipsize="end" />
         </LinearLayout>
 
-        <!-- ═══ 第二行：元信息（类型 · 大小） ═══ -->
-        <TextView
-            android:id="@+id/resultMeta"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textSize="13sp"
-            android:maxLines="1" />
-
-        <!-- ═══ 第三行：摘要片段（含命中高亮） ═══ -->
-        <TextView
-            android:id="@+id/resultSnippet"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textSize="14sp"
-            android:textColor="?android:attr/textColorPrimary"
-            android:lineSpacingExtra="2dp"
-            android:maxLines="4"
-            android:ellipsize="end" />
-
+        <!-- 行尾打开箭头（24dp + ripple） -->
+        <ImageView
+            android:id="@+id/resultOpen"
+            android:layout_width="@dimen/touch_target"
+            android:layout_height="@dimen/touch_target"
+            android:padding="@dimen/space_md"
+            android:src="@drawable/ic_chevron_right"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:focusable="true"
+            android:clickable="true"
+            android:contentDescription="@string/cd_open_file" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>nSearch · 极简风设计图 (UI Mockups v2)</title>
+<style>
+  :root{
+    --brand:#007DFF;
+    --brand-dark:#0A5BD6;
+    --text:#121212;
+    --text-2:#5F6368;
+    --text-3:#8E8E93;
+    --bg:#FFFFFF;
+    --surface:#FFFFFF;
+    --outline:#E5E5E5;
+    --highlight:#FFF3C4;
+    --frame-w:340px; --frame-h:760px;
+    --radius-card:16px;
+    --radius-input:12px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:#F5F6F8; color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Helvetica Neue",Arial,sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  header.page{
+    background:#FFFFFF; color:var(--text); padding:36px 24px 28px;
+    border-bottom:1px solid var(--outline);
+  }
+  header.page h1{margin:0 0 6px; font-size:26px; font-weight:600; letter-spacing:-0.4px;}
+  header.page .sub{color:var(--text-2); font-size:14px;}
+  .wrap{max-width:1240px; margin:0 auto; padding:28px 24px;}
+  section{margin:0 0 48px;}
+  h2{font-size:18px; font-weight:600; margin:0 0 14px; letter-spacing:-0.2px;}
+  h3{font-size:13px; color:var(--text-2); margin:22px 0 10px; text-transform:uppercase; letter-spacing:.6px; font-weight:600;}
+  p.note{color:var(--text-2); font-size:14px; max-width:880px;}
+
+  /* phone frame */
+  .phones{display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;}
+  .phone{
+    width:var(--frame-w); background:var(--bg); border:1px solid var(--outline);
+    border-radius:28px; padding:10px;
+    flex:0 0 auto;
+  }
+  .phone .screen{
+    width:100%; height:var(--frame-h); background:var(--surface);
+    border-radius:20px; overflow:hidden; display:flex; flex-direction:column;
+    border:1px solid var(--outline);
+  }
+  .phone .cap{text-align:center; font-size:13px; color:var(--text-2); margin-top:10px; font-weight:500;}
+
+  /* AppBar（大标题 + 单点索引入口 + 进度条） */
+  .appbar{
+    padding:18px 18px 12px; background:var(--surface);
+    border-bottom:1px solid var(--outline);
+  }
+  .appbar .row{display:flex; align-items:center; gap:10px;}
+  .appbar .title{
+    font-size:22px; font-weight:600; letter-spacing:-0.2px; flex:1;
+    color:var(--text);
+  }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 10px; border-radius:100px;
+    border:1px solid var(--outline); background:var(--surface);
+    font-size:13px; font-weight:500; color:var(--brand);
+  }
+  .pill svg{width:18px; height:18px;}
+  .ring{
+    width:38px; height:38px; border-radius:50%;
+    border:3px solid var(--outline); border-top-color:var(--brand);
+    display:grid; place-items:center; font-size:11px; font-weight:600;
+    color:var(--text);
+  }
+  .appbar .progress{
+    margin-top:10px; height:2px; background:transparent;
+    border-radius:2px; overflow:hidden;
+  }
+  .appbar .progress i{display:block; height:100%; width:62%; background:var(--brand);}
+
+  /* 搜索区 */
+  .searchblock{padding:14px 18px 6px;}
+  .searchbox{
+    display:flex; align-items:center; gap:8px;
+    border:1px solid var(--outline); border-radius:12px;
+    padding:10px 12px; background:var(--surface);
+  }
+  .searchbox svg{width:20px; height:20px; color:var(--text-2); flex:0 0 auto;}
+  .searchbox input{border:0; outline:0; flex:1; font-size:15px; color:var(--text); background:transparent;}
+  .searchbox .clear{color:var(--text-2); cursor:pointer;}
+
+  /* Chip 行（匹配精度 + 同义词） */
+  .chiprow{display:flex; gap:8px; align-items:center; padding:8px 18px 10px;}
+  .chiprow .left{display:flex; gap:8px; flex:1;}
+  .chip{
+    border:1px solid var(--outline); border-radius:100px;
+    padding:6px 14px; font-size:13px; color:var(--text);
+    background:var(--surface); font-weight:500;
+  }
+  .chip.on{background:var(--brand); color:#FFFFFF; border-color:var(--brand);}
+  .chiprow .textbtn{
+    color:var(--brand); font-size:13px; font-weight:500;
+    padding:6px 8px;
+  }
+
+  /* 结果计数行 */
+  .resultcount{padding:0 18px 6px; font-size:13px; color:var(--text-2);}
+
+  /* 最近搜索词 Chip 行 */
+  .recent{padding:6px 18px 10px;}
+  .recent .label{font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:flex; align-items:center;}
+  .recent .label .clear{margin-left:auto; color:var(--brand); text-transform:none; letter-spacing:0; font-size:12px; font-weight:500;}
+  .recent .row{display:flex; gap:6px; overflow:hidden;}
+  .recent .chip{background:#F2F4F6; border:0;}
+
+  /* 结果列表 */
+  .list{flex:1; overflow:auto; padding:0 18px 24px;}
+  .card{
+    border:1px solid var(--outline); border-radius:16px;
+    padding:14px 16px; margin-bottom:12px; background:var(--surface);
+  }
+  .card .top{display:flex; align-items:center; gap:10px;}
+  .card .ic{width:22px; height:22px; color:var(--text-2); flex:0 0 auto;}
+  .card .nm{flex:1; font-weight:600; font-size:15px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card .open{color:var(--text-2);}
+  .card .path{font-size:12px; color:var(--text-3); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .card .meta{font-size:12px; color:var(--text-2); margin-top:2px;}
+  .card .snip{font-size:14px; margin-top:8px; color:var(--text); line-height:1.45;}
+  .card .snip mark{background:var(--highlight); padding:0 2px; border-radius:3px; font-weight:600;}
+
+  /* 三态容器 */
+  .empty{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px 32px; text-align:center; color:var(--text-2); font-size:14px;
+  }
+  .empty .ic{width:48px; height:48px; color:var(--text-3); margin-bottom:14px;}
+  .empty .t{color:var(--text); font-size:15px; font-weight:600; margin-bottom:4px;}
+  .empty .s{color:var(--text-2); font-size:13px; max-width:260px;}
+  .empty .btn{
+    margin-top:16px; border:1px solid var(--brand); color:var(--brand);
+    border-radius:100px; padding:6px 16px; font-size:13px; font-weight:500;
+  }
+
+  /* 历史徽章 */
+  .badge{
+    display:inline-block; padding:3px 10px; border-radius:100px;
+    font-size:11px; font-weight:500; color:#FFFFFF;
+  }
+  .badge.success{background:#1BA672;}
+  .badge.failed{background:#D04444;}
+  .badge.skipped{background:#B78103;}
+
+  /* BottomSheet（索引进度详情） */
+  .sheet{
+    margin:18px; border:1px solid var(--outline); border-radius:24px 24px 20px 20px;
+    padding:14px 20px 22px; background:var(--surface);
+  }
+  .sheet .handle{width:40px; height:4px; border-radius:4px; background:var(--outline); margin:0 auto 14px;}
+  .sheet .t{font-size:14px; font-weight:600; margin-bottom:12px;}
+  .sheet .bar{height:4px; border-radius:4px; background:#EEF0F2; overflow:hidden; margin-bottom:8px;}
+  .sheet .bar i{display:block; height:100%; width:62%; background:var(--brand);}
+  .sheet .sub{font-size:12px; color:var(--text-2); margin-bottom:4px;}
+  .sheet .cur{font-size:12px; color:var(--text-3); margin-bottom:14px;}
+  .sheet .btns{display:flex; gap:8px; justify-content:flex-end;}
+  .sheet .btn{
+    border:1px solid var(--brand); color:var(--brand);
+    border-radius:100px; padding:5px 14px; font-size:12px; font-weight:500;
+  }
+
+  /* Design Tokens */
+  table.tok{width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--outline); border-radius:16px; overflow:hidden;}
+  table.tok th,table.tok td{text-align:left; padding:10px 14px; border-bottom:1px solid #F0F0F0; font-size:13px;}
+  table.tok th{background:#FAFBFC; color:var(--text-2); font-weight:600;}
+  table.tok td code{background:#F2F4F6; padding:1px 6px; border-radius:5px; font-size:12px;}
+
+  .callout{border:1px solid var(--outline); background:var(--surface); border-radius:16px; padding:18px 22px; font-size:13px; max-width:880px; line-height:1.7;}
+  .callout b{color:var(--brand-dark);}
+  .tag{display:inline-block; background:#E8F1FF; color:var(--brand-dark); border:1px solid #BFD8FF; border-radius:6px; padding:1px 8px; font-size:12px; margin-right:6px;}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>nSearch · 极简风设计图 v2</h1>
+  <div class="sub">纯白底 / 深蓝单点强调 / 大留白 / SF 字体风（Roboto 紧字距）；底层仍用 Material 组件以保 native 行为。</div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <h2>1 · 核心界面</h2>
+    <p class="note">配色与字号取自 <code>values/colors.xml</code>、<code>values/dimens.xml</code>、<code>values/styles.xml</code>；
+       字体层级统一收敛到 <code>TextAppearance.NSearch.*</code>；间距对齐 8dp 网格。</p>
+    <div class="phones">
+
+      <!-- 搜索主页（空闲 + 最近词） -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">
+            <div class="row">
+              <div class="title">N 搜索</div>
+              <span class="pill"><span>1,284</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input placeholder="搜索本地文件（全文）…" />
+            </div>
+          </div>
+          <div class="chiprow">
+            <div class="left">
+              <span class="chip">严格</span>
+              <span class="chip on">中等</span>
+              <span class="chip">宽松</span>
+            </div>
+            <span class="textbtn">同义词</span>
+          </div>
+          <div class="resultcount">共 1,284 个文件</div>
+          <div class="recent">
+            <div class="label">最近搜索<span class="clear">清空</span></div>
+            <div class="row">
+              <span class="chip">quarterly report</span>
+              <span class="chip">预算 2025</span>
+              <span class="chip">笔记</span>
+            </div>
+          </div>
+          <div class="empty">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+            <div class="t">开始一次搜索</div>
+            <div class="s">在上方输入关键词，结果会随输入更新。</div>
+          </div>
+        </div>
+        <div class="cap">主页 · 空闲（含最近搜索词）</div>
+      </div>
+
+      <!-- 搜索结果 -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">
+            <div class="row">
+              <div class="title">N 搜索</div>
+              <span class="pill"><span>1,284</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input value="quarterly report" />
+              <span class="clear">×</span>
+            </div>
+          </div>
+          <div class="chiprow">
+            <div class="left">
+              <span class="chip">严格</span>
+              <span class="chip on">中等</span>
+              <span class="chip">宽松</span>
+            </div>
+            <span class="textbtn">同义词</span>
+          </div>
+          <div class="resultcount">找到 128 条结果</div>
+          <div class="list">
+            <div class="card">
+              <div class="top">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+                <span class="nm">Q3_quarterly_report.pdf</span>
+                <svg class="open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg>
+              </div>
+              <div class="path">/Documents/finance/2025/Q3_quarterly_report.pdf</div>
+              <div class="meta">PDF · 2.4 MB</div>
+              <div class="snip">The <mark>quarterly report</mark> shows revenue up 12% QoQ, driven by the APAC segment and a one-time licensing gain in the <mark>quarterly report</mark> appendix…</div>
+            </div>
+            <div class="card">
+              <div class="top">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+                <span class="nm">notes.md</span>
+                <svg class="open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg>
+              </div>
+              <div class="path">/Notes/quarterly_report_notes.md</div>
+              <div class="meta">Markdown · 18 KB</div>
+              <div class="snip">Draft of the <mark>quarterly report</mark>: confirm the chart on slide 4 before sending to finance@…</div>
+            </div>
+            <div class="card">
+              <div class="top">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+                <span class="nm">budget_2025.xlsx</span>
+                <svg class="open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg>
+              </div>
+              <div class="path">/Sheets/budget_2025.xlsx</div>
+              <div class="meta">Excel · 510 KB</div>
+              <div class="snip">Sheet "Summary" references the <mark>quarterly report</mark> total on row 22; variance +3.1% vs plan.</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">主页 · 有结果</div>
+      </div>
+
+      <!-- 主页 · 索引进度（AppBar 进度条 + 详情 BottomSheet） -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">
+            <div class="row">
+              <div class="title">N 搜索</div>
+              <div class="ring">62%</div>
+            </div>
+            <div class="progress"><i style="width:62%"></i></div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input placeholder="搜索本地文件（全文）…" />
+            </div>
+          </div>
+          <div class="resultcount">正在索引 796 / 1,284</div>
+          <div class="list">
+            <div class="sheet">
+              <div class="handle"></div>
+              <div class="t">正在索引</div>
+              <div class="bar"><i></i></div>
+              <div class="sub">已索引 796 / 1,284 个文件</div>
+              <div class="cur">当前文件：/Documents/finance/2025/Q3_quarterly_report.pdf</div>
+              <div class="btns">
+                <span class="btn">暂停</span>
+                <span class="btn">取消</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">主页 · 索引中（AppBar 进度条 + 详情 BottomSheet）</div>
+      </div>
+
+      <!-- 扫描历史 -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">
+            <div class="row">
+              <div class="title">扫描历史</div>
+              <span class="pill" style="visibility:hidden;">·</span>
+            </div>
+          </div>
+          <div class="list">
+            <div class="card">
+              <div class="top">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <span class="nm">2026-08-17 09:12</span>
+                <span class="badge success">成功</span>
+              </div>
+              <div class="meta">共 1,284 个文件 · 成功 1,284 · 用时 3m 42s</div>
+            </div>
+            <div class="card">
+              <div class="top">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <span class="nm">2026-08-15 21:03</span>
+                <span class="badge success">成功</span>
+              </div>
+              <div class="meta">共 512 个文件 · 成功 512 · 用时 1m 08s</div>
+            </div>
+            <div class="card">
+              <div class="top">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                <span class="nm">2026-08-12 14:20</span>
+                <span class="badge failed">3 个失败</span>
+              </div>
+              <div class="meta">共 230 个文件 · 成功 220 · 失败 3 · 跳过 7 · 用时 0m 42s</div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">扫描历史 · 状态徽章</div>
+      </div>
+
+      <!-- 空结果 -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">
+            <div class="row">
+              <div class="title">N 搜索</div>
+              <span class="pill"><span>1,284</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input value="foobar123" />
+              <span class="clear">×</span>
+            </div>
+          </div>
+          <div class="chiprow">
+            <div class="left">
+              <span class="chip on">严格</span>
+              <span class="chip">中等</span>
+              <span class="chip">宽松</span>
+            </div>
+            <span class="textbtn">同义词</span>
+          </div>
+          <div class="resultcount">没有匹配结果</div>
+          <div class="empty">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/><path d="M8 11h6"/></svg>
+            <div class="t">没有匹配结果</div>
+            <div class="s">换一些关键词试试，或在设置中重建索引。</div>
+          </div>
+        </div>
+        <div class="cap">主页 · 无结果</div>
+      </div>
+
+      <!-- 错误态 -->
+      <div class="phone">
+        <div class="screen">
+          <div class="appbar">
+            <div class="row">
+              <div class="title">N 搜索</div>
+              <span class="pill"><span>0</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+              </span>
+            </div>
+          </div>
+          <div class="searchblock">
+            <div class="searchbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input placeholder="搜索本地文件（全文）…" />
+            </div>
+          </div>
+          <div class="chiprow">
+            <div class="left">
+              <span class="chip">严格</span>
+              <span class="chip on">中等</span>
+              <span class="chip">宽松</span>
+            </div>
+            <span class="textbtn">同义词</span>
+          </div>
+          <div class="resultcount">搜索失败</div>
+          <div class="empty">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 7v6"/><path d="M12 17h.01"/></svg>
+            <div class="t">出错了</div>
+            <div class="s">无法读取搜索索引。点击重试，或重建索引。</div>
+            <span class="btn">重试</span>
+          </div>
+        </div>
+        <div class="cap">主页 · 错误态</div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>2 · 设计令牌（Design Tokens）</h2>
+    <table class="tok">
+      <tr><th>Token</th><th>值</th><th>用途</th></tr>
+      <tr><td>Brand</td><td><code>#007DFF</code></td><td>主色：选中态、Chip 选中、进度条、主按钮描边</td></tr>
+      <tr><td>Brand dark</td><td><code>#0A5BD6</code></td><td>渐变 / 按压态</td></tr>
+      <tr><td>Text</td><td><code>#121212</code></td><td>主文字（日间）</td></tr>
+      <tr><td>Text 2</td><td><code>#5F6368</code></td><td>次要文字、meta</td></tr>
+      <tr><td>Text 3</td><td><code>#8E8E93</code></td><td>第三级：路径、提示</td></tr>
+      <tr><td>Surface</td><td><code>#FFFFFF</code></td><td>页面/卡片背景（纯白底）</td></tr>
+      <tr><td>Outline</td><td><code>#E5E5E5</code></td><td>1dp 描边代替阴影做层级</td></tr>
+      <tr><td>Highlight</td><td><code>#FFF3C4</code></td><td>命中关键词高亮底色</td></tr>
+      <tr><td>State Success</td><td><code>#1BA672</code></td><td>历史徽章 · 全部成功</td></tr>
+      <tr><td>State Failed</td><td><code>#D04444</code></td><td>历史徽章 · 有失败</td></tr>
+      <tr><td>State Skipped</td><td><code>#B78103</code></td><td>历史徽章 · 仅跳过</td></tr>
+      <tr><td>Radius Card</td><td><code>16dp</code></td><td>结果卡 / 历史卡</td></tr>
+      <tr><td>Radius Input</td><td><code>12dp</code></td><td>搜索输入框</td></tr>
+      <tr><td>Radius Pill</td><td><code>100dp</code></td><td>按钮 / 徽章 / Chip</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>3 · 信息架构对比</h2>
+    <table class="tok">
+      <tr><th>区域</th><th>旧版</th><th>v2（极简风）</th></tr>
+      <tr><td>工具栏</td><td>「即时索引 / 历史 / 设置 / 进度环」4 个图标</td><td>大标题「N 搜索」+ 单一索引入口（pill「1,284」+ 索引图标；活跃态为环 + 百分比）</td></tr>
+      <tr><td>搜索框</td><td>与「高级按钮」同行，挤压</td><td>独占一行，1dp 描边 12dp 圆角</td></tr>
+      <tr><td>匹配精度</td><td>隐藏在「高级搜索」BottomSheet 里</td><td>Chip 行常驻（严格/中等/宽松）+ 同义词文字按钮</td></tr>
+      <tr><td>索引进度</td><td>底部详情卡，遮挡结果</td><td>AppBar 进度条 + 点击展开 BottomSheet</td></tr>
+      <tr><td>结果卡</td><td>文件名 + 类型·大小 + 摘要</td><td>文件名 + <b>路径</b> + 类型·大小 + 摘要 + 行尾 24dp 打开箭头</td></tr>
+      <tr><td>历史卡</td><td>时间 + meta 行</td><td>时间 + 状态徽章（绿/红/琥珀 pill）+ meta + 点开展开路径</td></tr>
+      <tr><td>空 / 错误</td><td>两种样式各异</td><td>EmptyStateView 统一收敛（含 idle / no_results / error）</td></tr>
+      <tr><td>最近搜索</td><td>无</td><td>空闲态显示 Chip 行 + 清空按钮</td></tr>
+      <tr><td>设置</td><td>6 个分组 + 默认值混杂</td><td>7 个分组按频次排序（搜索 / 范围 / 类型 / 大小 / 维护 / 数据 / 关于）</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>4 · 暗色模式</h2>
+    <p class="note">背景压暗为 <code>#121212</code>、表面 <code>#1E1E1E</code>，描边收敛到 <code>#2C2C2E</code>，文字提亮到 <code>#FAFAFA</code>，
+       状态色再提亮一档（绿 <code>#34C77B</code>、红 <code>#E66A6A</code>、琥珀 <code>#E0A23A</code>）。
+       单一品牌色 <code>#007DFF</code> 全程不变；图标 <code>fillColor</code> 用 <code>?attr/colorText</code> 自动切换。</p>
+  </section>
+
+  <section>
+    <h2>5 · 自检清单（对照 UI_DESIGN_GUIDE.md §10）</h2>
+    <div class="callout">
+      <div>✓ 屏幕四周 16dp 外边距，非贴边</div>
+      <div>✓ 列表行触控区满宽、内容 16dp 内边距、图标统一 24dp</div>
+      <div>✓ 卡片 elevation = 0 + 1dp 描边 + 16dp 圆角</div>
+      <div>✓ 列表项 12dp 间距 + 末项补 24dp 底距</div>
+      <div>✓ 全部使用 Material 原生组件（MaterialCardView / Chip / LinearProgressIndicator / BottomSheet）</div>
+      <div>✓ 主色单一（<code>#007DFF</code>），层级靠留白与对比建立</div>
+      <div>✓ 动效 ≤ 300ms、统一 <code>AccelerateDecelerateInterpolator</code>、尊重 reduced-motion</div>
+      <div>✓ 列表具备「有数据 / 空 / 错误 / 索引中」四态</div>
+      <div>✓ 触控目标 ≥ 48dp、对比度 WCAG AA</div>
+      <div>✓ 图标矢量规范（1024 视口 / 85.3 线宽 / <code>?attr/colorText</code> 取色）</div>
+      <div>✓ 暗色模式真实落地（非简单反色）</div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

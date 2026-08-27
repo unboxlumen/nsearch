@@ -36,6 +36,10 @@ import java.util.Set;
  */
 public final class SearchEngine {
 
+    /** NRT refresh 最小间隔：避免每次搜索都触发段刷新（索引写入活跃时开销明显）。 */
+    private static final long REFRESH_INTERVAL_MS = 500L;
+    private static volatile long lastRefreshMs = 0L;
+
     private SearchEngine() {}
 
     public static List<SearchResult> search(Context context, LuceneManager km, String queryStr,
@@ -43,20 +47,36 @@ public final class SearchEngine {
         List<SearchResult> results = new ArrayList<>();
         if (queryStr == null || queryStr.trim().isEmpty()) return results;
 
+        long t0 = System.nanoTime();
         Analyzer queryAnalyzer = QueryAnalyzer.obtain(context, km, settings.isSynonymEnabled());
 
         List<String> terms = tokenize(queryAnalyzer, queryStr);
         if (terms.isEmpty()) return results;
+        long t1 = System.nanoTime();
 
         int minShouldMatch = QueryBuilder.computeMinShouldMatch(settings, terms.size());
         Query query = QueryBuilder.build(terms, minShouldMatch);
+        long t2 = System.nanoTime();
 
         IndexSearcher searcher = null;
         try {
+            // 节流 NRT refresh：500ms 内最多刷新一次，避免每个查询都等待/触发段刷新。
+            long now = System.currentTimeMillis();
+            if (now - lastRefreshMs >= REFRESH_INTERVAL_MS) {
+                km.maybeRefresh();
+                lastRefreshMs = now;
+            }
             searcher = km.acquire();
-            km.maybeRefresh();
+            long t3 = System.nanoTime();
             TopDocs td = searcher.search(query, topN);
+            long t4 = System.nanoTime();
             results.addAll(ResultBuilder.build(context, queryAnalyzer, query, searcher, td));
+            long t5 = System.nanoTime();
+            android.util.Log.d("NSearchPerf",
+                    String.format(java.util.Locale.US,
+                            "analyze=%dms tokenize=%dms build=%dms refresh=%dms search=%dms topN=%d",
+                            (t1 - t0) / 1_000_000, (t2 - t1) / 1_000_000, (t3 - t2) / 1_000_000,
+                            (t4 - t3) / 1_000_000, (t5 - t4) / 1_000_000, topN));
         } catch (IOException e) {
             // 搜索失败时返回已收集的部分结果（通常为空）
         } finally {

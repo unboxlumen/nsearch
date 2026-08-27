@@ -1,11 +1,15 @@
 package com.unbox.nsearch;
 
 import android.os.Bundle;
-import android.view.MenuItem;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
+/**
+ * 设置页（极简风重构版）：
+ *  - 共用 AppBar；标题栏提供「返回」按钮；
+ *  - 内部用 PreferenceFragmentCompat 容器承载设置项。
+ */
 public class SettingsActivity extends AppCompatActivity {
 
     @Override
@@ -13,12 +17,17 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(R.string.title_settings);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+        // 兼容 toolbar 占位（新版无 MaterialToolbar,标题由 Activity 标题承担）
+        View toolbarPlaceholder = findViewById(R.id.toolbar);
+        if (toolbarPlaceholder != null) toolbarPlaceholder.setVisibility(View.GONE);
+
+        // 索引入口在设置页隐藏
+        View indexIndicator = findViewById(R.id.indexIndicator);
+        if (indexIndicator != null) indexIndicator.setVisibility(View.GONE);
+        View appBarProgress = findViewById(R.id.appBarProgress);
+        if (appBarProgress != null) appBarProgress.setVisibility(View.GONE);
+        View appBarTitle = findViewById(R.id.appBarTitle);
+        if (appBarTitle != null) appBarTitle.setVisibility(View.GONE);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -28,11 +37,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            finish();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

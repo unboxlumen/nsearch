@@ -13,7 +13,12 @@
     <string name="empty_results">No matching results</string>
     <string name="found_results">Found %1$d results</string>
     <string name="empty_hint">Type a keyword to search. Build the index first to search file contents.</string>
-    <string name="open_file">Open file</string>
+    <string name="open_file">Open</string>
+    <string name="cd_open_file">Open file</string>
+    <string name="cd_clear_query">Clear query</string>
+    <string name="cd_advanced">Advanced search options</string>
+    <string name="cd_index_idle">Indexed files. Tap to start indexing.</string>
+    <string name="cd_index_active">Indexing in progress. Tap for details.</string>
 
     <!-- index / progress -->
     <string name="btn_index_now">Index now</string>
@@ -27,6 +32,14 @@
     <string name="index_cancelled">Index stopped</string>
     <string name="indexing_notification_title">Indexing files…</string>
     <string name="indexing_notification_text">%1$d / %2$d · %3$s</string>
+
+    <!-- index detail sheet -->
+    <string name="index_detail_title">Indexing</string>
+    <string name="index_detail_subtitle">Indexed %1$d / %2$d files</string>
+    <string name="index_detail_current">Current: %1$s</string>
+    <string name="index_detail_pause">Pause</string>
+    <string name="index_detail_resume">Resume</string>
+    <string name="index_detail_cancel">Cancel</string>
 
     <!-- permission -->
     <string name="no_permission">Storage permission is required to scan files. Please grant it in Settings.</string>
@@ -84,6 +97,23 @@
     <string name="history_failed">failed</string>
     <string name="history_skipped">skipped</string>
     <string name="history_duration">took %1$s</string>
+    <string name="history_status_success">Success</string>
+    <string name="history_status_failed">%1$d failed</string>
+    <string name="history_status_skipped">%1$d skipped</string>
+
+    <!-- recent queries -->
+    <string name="recent_searches">Recent searches</string>
+    <string name="recent_clear">Clear</string>
+    <string name="cd_recent_query">Recent search: %1$s</string>
+
+    <!-- empty / error state -->
+    <string name="state_empty_title">Start a search</string>
+    <string name="state_empty_subtitle">Enter a keyword above. Results update as you type.</string>
+    <string name="state_no_results_title">No matching results</string>
+    <string name="state_no_results_subtitle">Try different keywords, or rebuild the index in Settings.</string>
+    <string name="state_error_title">Something went wrong</string>
+    <string name="state_error_subtitle">We couldn\'t read the search index. Tap retry, or rebuild it.</string>
+    <string name="retry">Retry</string>
 
     <!-- misc -->
     <string name="cancel">Cancel</string>
@@ -93,7 +123,6 @@
     <string name="indexing_in_progress">Indexing is in progress…</string>
     <string name="search_failed">Search failed</string>
     <string name="search_index_error">Couldn\'t read the search index.\nRebuild it, then retry the search.</string>
-    <string name="retry">Retry</string>
     <string name="toast_index_started">Indexing started</string>
     <string name="toast_index_already_running">Indexing is already running</string>
     <string name="toast_index_paused_resumed">Resumed</string>

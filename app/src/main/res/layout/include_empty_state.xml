@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 空 / 加载 / 错误 三态共用的容器（icon + title + subtitle + 可选 action）。
+     由 EmptyStateView 渲染。 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:paddingStart="@dimen/space_2xl"
+    android:paddingEnd="@dimen/space_2xl"
+    android:paddingTop="@dimen/space_3xl"
+    android:paddingBottom="@dimen/space_3xl">
+
+    <ImageView
+        android:id="@+id/stateIcon"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:src="@drawable/ic_search"
+        android:importantForAccessibility="no" />
+
+    <TextView
+        android:id="@+id/stateTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_lg"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.NSearch.Section" />
+
+    <TextView
+        android:id="@+id/stateSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_xs"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.NSearch.Meta" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/stateAction"
+        style="@style/Widget.NSearch.PillButton"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/touch_target_compact"
+        android:layout_marginTop="@dimen/space_lg"
+        android:visibility="gone"
+        android:minWidth="120dp" />
+</LinearLayout>

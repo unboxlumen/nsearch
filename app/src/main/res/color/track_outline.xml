@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AppBar 进度条轨道颜色：取自 outline 但 alpha 15%，
+     让进度条不抢眼但仍可识别。 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="#26000000" />
+</selector>

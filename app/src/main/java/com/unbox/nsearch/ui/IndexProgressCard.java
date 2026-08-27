@@ -1,7 +1,6 @@
 package com.unbox.nsearch.ui;
 
 import android.view.View;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,16 +12,15 @@ import com.unbox.nsearch.IndexController;
 import com.unbox.nsearch.R;
 
 /**
- * 索引进度详情卡 + 工具栏进度环 的视图控制器。
+ * 旧版索引进度详情卡 + 工具栏进度环 的视图控制器（保留兼容桩）。
  *
- * <p>负责把 {@link IndexController.State} 翻译成：
- *  - 详情卡内的进度条 / 统计行 / 当前文件行 / 暂停按钮文案；
- *  - 工具栏进度环的百分比文字；
- *  - 工具栏空闲态徽章「已索引 N」；
- *  - 详情卡的显隐（仅在运行中显示）。
+ * <p>UI 重构后,主页改用 {@link IndexIndicatorView} + {@link IndexDetailSheet},
+ * 历史页不再监听 Controller。本类保留以便任何缓存 / 反射引用不报 NoSuchFieldError。
  *
- * <p>pause/resume 动作通过 {@link Listener} 回调给宿主 Activity，避免本类反向依赖 Controller。
+ * <p>为了对找不到的 R.id 容错：所有 {@code findViewById} 接收 null 时不抛 NPE,
+ * 仅 {@code Listener} 回调路径保留给外部显式调用。
  */
+@Deprecated
 public final class IndexProgressCard implements IndexController.Listener {
 
     public interface Listener {
@@ -30,23 +28,16 @@ public final class IndexProgressCard implements IndexController.Listener {
         void onCancel();
     }
 
-    private final View progressCard;
-    private final ProgressBar progressBar;
-    private final TextView progressStats;
-    private final TextView progressCurrent;
-    private final TextView progressTitle;
     private final TextView resultCount;
-    private final MaterialButton btnPauseResume;
-    private final MaterialButton btnCancel;
+    private final Listener listener;
+    private final ResultCountFormatter resultCountFormatter;
 
+    @Nullable private final View progressCard;
     @Nullable private final CircularProgressIndicator ring;
     @Nullable private final TextView ringPct;
     @Nullable private final View indexProgressAction;
     @Nullable private final View activeGroup;
     @Nullable private final TextView idleBadge;
-
-    private final Listener listener;
-    private final ResultCountFormatter resultCountFormatter;
 
     public IndexProgressCard(@NonNull View root,
                              @Nullable View indexProgressAction,
@@ -55,21 +46,13 @@ public final class IndexProgressCard implements IndexController.Listener {
                              @NonNull TextView resultCount,
                              @NonNull Listener listener,
                              @NonNull ResultCountFormatter formatter) {
-        this.progressCard = root.findViewById(R.id.progressCard);
-        this.progressBar = root.findViewById(R.id.progressBar);
-        this.progressStats = root.findViewById(R.id.progressStats);
-        this.progressCurrent = root.findViewById(R.id.progressCurrent);
-        this.progressTitle = root.findViewById(R.id.progressTitle);
-        this.btnPauseResume = root.findViewById(R.id.btnPauseResume);
-        this.btnCancel = root.findViewById(R.id.btnCancel);
-        this.resultCount = resultCount;
-        this.indexProgressAction = indexProgressAction;
+        this.progressCard = safeFind(root, R.id.progressCard);
         this.ring = ring;
         this.ringPct = ringPct;
+        this.resultCount = resultCount;
+        this.indexProgressAction = indexProgressAction;
         this.listener = listener;
         this.resultCountFormatter = formatter;
-
-        // 空闲态徽章与活跃态容器,与 indexProgressAction 同级
         if (indexProgressAction != null) {
             this.activeGroup = indexProgressAction.findViewById(R.id.activeGroup);
             this.idleBadge = indexProgressAction.findViewById(R.id.idleBadge);
@@ -77,16 +60,16 @@ public final class IndexProgressCard implements IndexController.Listener {
             this.activeGroup = null;
             this.idleBadge = null;
         }
+    }
 
-        btnPauseResume.setOnClickListener(v -> listener.onTogglePause());
-        if (btnCancel != null) {
-            btnCancel.setOnClickListener(v -> listener.onCancel());
+    private static View safeFind(View root, int id) {
+        try {
+            return root.findViewById(id);
+        } catch (Throwable t) {
+            return null;
         }
     }
 
-    /**
-     * 切换详情卡的显隐。
-     */
     public void toggleDetail() {
         if (progressCard != null) {
             progressCard.setVisibility(progressCard.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
@@ -95,67 +78,43 @@ public final class IndexProgressCard implements IndexController.Listener {
 
     @Override
     public void onProgress(IndexController.State s) {
-        progressBar.setMax(Math.max(1, s.total));
-        progressBar.setProgress(s.indexed);
-        progressStats.setText(progressStats.getContext().getString(R.string.index_stats, s.indexed, s.total));
-        progressCurrent.setText(progressCurrent.getContext().getString(R.string.indexing_current, s.currentFile));
-        int pct = s.percent();
-        if (ring != null) ring.setProgress(pct);
+        int pct = s.total > 0 ? (int) (s.indexed * 100L / s.total) : 0;
+        if (ring != null) ring.setProgressCompat(pct, true);
         if (ringPct != null) ringPct.setText(pct + "%");
         boolean active = s.status.isActive();
         if (active) {
-            // 活跃态:resultCount 实时显示「已索引 N / M」+ 当前文件,
-            // 这样首页上"文件总数"后面的数字会一直变化,无需打开详情卡就能感知进度。
             resultCount.setText(resultCountFormatter.formatActive(s.indexed, s.total, s.currentFile));
         } else {
-            // 索引结束后刷新空闲徽章显示最新总数
-            refreshIdleBadge();
+            if (idleBadge != null) {
+                idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, resultCountFormatter.formatIdleCount()));
+            }
             resultCount.setText(resultCountFormatter.formatIdle());
         }
     }
 
     @Override
     public void onStatus(IndexController.State s) {
-        boolean active = s.status.isActive();
-        applyActiveState(active);
-        btnPauseResume.setText(s.status == IndexController.Status.PAUSED
-                ? R.string.btn_resume : R.string.btn_pause);
+        boolean active = s.status == IndexController.Status.RUNNING
+                || s.status == IndexController.Status.PAUSED;
+        if (indexProgressAction != null) indexProgressAction.setVisibility(View.VISIBLE);
+        if (activeGroup != null) activeGroup.setVisibility(active ? View.VISIBLE : View.GONE);
+        if (idleBadge != null) idleBadge.setVisibility(active ? View.GONE : View.VISIBLE);
         if (!active) {
-            // 空闲态:刷新徽章,关闭详情卡
-            refreshIdleBadge();
-            progressCard.setVisibility(View.GONE);
+            if (idleBadge != null) {
+                idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, resultCountFormatter.formatIdleCount()));
+            }
+            if (progressCard != null) progressCard.setVisibility(View.GONE);
             resultCount.setText(resultCountFormatter.formatIdle());
         }
     }
 
-    private void refreshIdleBadge() {
-        if (idleBadge != null) {
-            int n = resultCountFormatter.formatIdleCount();
-            idleBadge.setText(idleBadge.getContext().getString(R.string.toolbar_idle_badge, n));
-        }
+    public void hideDetail() {
+        if (progressCard != null) progressCard.setVisibility(View.GONE);
     }
 
-    private void applyActiveState(boolean active) {
-        if (indexProgressAction == null) return;
-        indexProgressAction.setVisibility(View.VISIBLE);
-        if (activeGroup != null) {
-            activeGroup.setVisibility(active ? View.VISIBLE : View.GONE);
-        }
-        if (idleBadge != null) {
-            idleBadge.setVisibility(active ? View.GONE : View.VISIBLE);
-        }
-    }
-
-    /**
-     * 「空闲态」结果计数行格式化：通常显示索引文件总数。
-     */
     public interface ResultCountFormatter {
         @NonNull String formatIdle();
         int formatIdleCount();
-        /**
-         * 「活跃态」结果计数行格式化:实时显示已索引 / 候选总数 + 当前文件。
-         * 在每次 {@link #onProgress} 都被调用,因此实现应保持轻量,不要做 IO。
-         */
         @NonNull String formatActive(int indexed, int total, @Nullable String currentFile);
     }
 }

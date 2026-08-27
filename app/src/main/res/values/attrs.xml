@@ -3,4 +3,12 @@
     <!-- 图标统一使用此主题属性取色，自动随日/夜切换（见 UI_DESIGN_GUIDE.md §12.4） -->
     <attr name="colorText" format="color" />
     <attr name="colorOutline" format="color" />
+
+    <!-- 第三级文字：提示 / 路径 / 禁用 -->
+    <attr name="colorTextTertiary" format="color" />
+
+    <!-- 状态色：成功 / 失败 / 跳过（历史徽章等场景） -->
+    <attr name="colorStateSuccess" format="color" />
+    <attr name="colorStateFailed" format="color" />
+    <attr name="colorStateSkipped" format="color" />
 </resources>

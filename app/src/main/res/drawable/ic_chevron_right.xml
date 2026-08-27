@@ -1,0 +1,8 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="1024" android:viewportHeight="1024">
+    <!-- 行尾打开箭头（替代「打开」按钮为图标 + ripple）。
+         与其他图标保持 1024 视口 / 85.3 线宽 / ?attr/colorText（§12.2） -->
+    <path android:fillColor="?attr/colorText"
+        android:pathData="M384 256l256 256-256 256 60.330667 60.330667 316.330666-316.330667L444.330667 195.669333z" />
+</vector>

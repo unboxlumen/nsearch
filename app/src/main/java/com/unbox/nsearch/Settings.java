@@ -22,6 +22,11 @@ public final class Settings {
     public static final String KEY_FILE_TYPES = "file_types";
     public static final String KEY_CHAR_LIMIT = "char_limit";
     public static final String KEY_SCOPE_URIS = "scope_uris";
+    /** 最近搜索词（StringSet 持久化，LRU；最多 8 条）。 */
+    public static final String KEY_RECENT_QUERIES = "recent_queries";
+
+    /** {@link #addRecentQuery} 保留的最大条数。 */
+    public static final int RECENT_QUERIES_MAX = 8;
 
     public enum SearchMode {
         STRICT, MEDIUM, LOOSE;
@@ -113,5 +118,54 @@ public final class Settings {
 
     public void clearScopeUris() {
         prefs.edit().remove(KEY_SCOPE_URIS).apply();
+    }
+
+    /**
+     * 最近搜索词（LRU，最新在前）。空列表返回空集合（不返回 null）。
+     */
+    @NonNull
+    public java.util.List<String> getRecentQueries() {
+        Set<String> s = prefs.getStringSet(KEY_RECENT_QUERIES, null);
+        if (s == null || s.isEmpty()) return new java.util.ArrayList<>();
+        // SharedPreferences 不保证顺序；用 build 顺序作为稳定 LRU 视角：
+        // 持久化时把最新写入尾部，读取后翻转即可「最新在前」。
+        java.util.List<String> out = new java.util.ArrayList<>(s);
+        Collections.reverse(out);
+        return out;
+    }
+
+    /**
+     * 把搜索词加入最近列表（去重 + LRU + 截断到 {@link #RECENT_QUERIES_MAX}）。
+     * trim 后空串不入库。
+     */
+    public void addRecentQuery(@NonNull String query) {
+        String q = query.trim();
+        if (q.isEmpty()) return;
+        Set<String> cur = prefs.getStringSet(KEY_RECENT_QUERIES, null);
+        // 用 LinkedHashSet 保留顺序
+        java.util.LinkedHashSet<String> next = new java.util.LinkedHashSet<>();
+        if (cur != null) next.addAll(cur);
+        next.remove(q);
+        next.add(q);
+        while (next.size() > RECENT_QUERIES_MAX) {
+            java.util.Iterator<String> it = next.iterator();
+            if (it.hasNext()) { it.next(); it.remove(); }
+        }
+        prefs.edit().putStringSet(KEY_RECENT_QUERIES, next).apply();
+    }
+
+    /** 清空最近搜索词。 */
+    public void clearRecentQueries() {
+        prefs.edit().remove(KEY_RECENT_QUERIES).apply();
+    }
+
+    /**
+     * {@code putString} 在重构中暴露了「任意 key → 任意 String」的破口
+     * (无法保证 value 合法、也无法被 IDE 重命名追踪)。
+     * 所有写操作请走强类型 setter（{@link #setSearchMode} / {@link #setSynonymEnabled} 等）。
+     */
+    @Deprecated
+    public void putString(String key, String value) {
+        prefs.edit().putString(key, value).apply();
     }
 }

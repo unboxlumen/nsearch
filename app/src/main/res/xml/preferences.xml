@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- 设置页（按使用频次排序，分类清晰）：
+     搜索 → 索引范围 → 文件类型 → 大小上限 → 维护 → 数据 → 关于
+     见 UI_DESIGN_GUIDE.md §6 「设置 / PreferenceCategory」。 -->
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <!-- 1. 搜索 -->
     <PreferenceCategory
         android:title="@string/settings_default_mode"
         app:iconSpaceReserved="false">
@@ -21,9 +25,20 @@
             android:title="@string/settings_synonym"
             android:summary="@string/settings_synonym_summary"
             android:defaultValue="false" />
-
     </PreferenceCategory>
 
+    <!-- 2. 索引范围 -->
+    <PreferenceCategory
+        android:title="@string/settings_scope"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            app:iconSpaceReserved="false"
+            android:key="add_folder"
+            android:title="@string/add_folder" />
+    </PreferenceCategory>
+
+    <!-- 3. 文件类型 -->
     <PreferenceCategory
         android:title="@string/settings_file_types"
         app:iconSpaceReserved="false">
@@ -35,9 +50,9 @@
             android:summary="@string/settings_file_types"
             android:entries="@array/file_type_entries"
             android:entryValues="@array/file_type_values" />
-
     </PreferenceCategory>
 
+    <!-- 4. 大小上限 -->
     <PreferenceCategory
         android:title="@string/settings_char_limit"
         app:iconSpaceReserved="false">
@@ -50,20 +65,9 @@
             android:entries="@array/char_limit_entries"
             android:entryValues="@array/char_limit_values"
             android:defaultValue="1000000" />
-
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="@string/settings_scope"
-        app:iconSpaceReserved="false">
-
-        <Preference
-            app:iconSpaceReserved="false"
-            android:key="add_folder"
-            android:title="@string/add_folder" />
-
-    </PreferenceCategory>
-
+    <!-- 5. 维护（低频操作） -->
     <PreferenceCategory
         android:title="@string/settings_index_ops"
         app:iconSpaceReserved="false">
@@ -77,6 +81,12 @@
             app:iconSpaceReserved="false"
             android:key="delete_index"
             android:title="@string/delete_index" />
+    </PreferenceCategory>
+
+    <!-- 6. 数据 -->
+    <PreferenceCategory
+        android:title="@string/title_scan_history"
+        app:iconSpaceReserved="false">
 
         <Preference
             app:iconSpaceReserved="false"
@@ -87,9 +97,9 @@
             app:iconSpaceReserved="false"
             android:key="clear_history"
             android:title="@string/clear_history" />
-
     </PreferenceCategory>
 
+    <!-- 7. 关于 -->
     <PreferenceCategory
         android:title="@string/about"
         app:iconSpaceReserved="false">
@@ -99,7 +109,6 @@
             android:key="about_version"
             android:title="@string/about"
             android:summary="@string/version" />
-
     </PreferenceCategory>
 
 </PreferenceScreen>
