@@ -11,8 +11,8 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
+import androidx.appcompat.widget.AppCompatButton;
 
-import com.google.android.material.button.MaterialButton;
 import com.unbox.nsearch.R;
 
 /**
@@ -20,6 +20,11 @@ import com.unbox.nsearch.R;
  *
  * <p>把三态样式收敛到一处，避免散落实现造成的「三种样式各异」反模式
  * （见 UI_DESIGN_GUIDE.md §8「易忽略的盲点 — 三态」）。
+ *
+ * <p>{@code action} 用 {@link AppCompatButton} 而非 {@code MaterialButton}：
+ * 后者在某些 device 上 inflate 时会因解析 {@code ?attr/shapeAppearanceSmallComponent}
+ * 等链而抛 {@code Resources$NotFoundException: Can't find ColorStateList}。改用普通
+ * Button + 自定义 selector 实现「Pill 描边按钮」外观,避开该问题。
  */
 public final class EmptyStateView extends android.widget.LinearLayout {
 
@@ -32,7 +37,7 @@ public final class EmptyStateView extends android.widget.LinearLayout {
     private final ImageView icon;
     private final TextView title;
     private final TextView subtitle;
-    private final MaterialButton action;
+    private final AppCompatButton action;
 
     public EmptyStateView(@NonNull Context context) {
         this(context, null);

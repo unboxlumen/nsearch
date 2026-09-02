@@ -170,6 +170,7 @@ public class MainActivity extends AppCompatActivity
             controller.deleteIndex();
             permissionHelper.request();
         }
+        // 历史回填在 NSearchApp.onCreate() 已执行(幂等,这里不重复)。
 
         // ── 子控制器 ──
         permissionHelper = new PermissionHelper(this, this);
@@ -309,9 +310,20 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /** 当前已索引文件数（优先读 Lucene 实时计数，不可用时回退 DB）。 */
+    /**
+     * 当前已索引文件数。
+     *
+     * <p>优先用 {@code indexed_files} 表的 {@code STATUS_DONE} 行数：DB 在每次
+     * {@code IndexPipeline.indexOne()} 成功 upsert 与 {@code IncrementalSync.cleanupDeleted()}
+     * 删除时与 Lucene 同步写入，是「对外可见的已索引文件数」唯一权威源。
+     *
+     * <p>之前先读 {@code km.docCount()()}（Lucene 的 {@code numDocs}），它在多次
+     * {@code updateDocument}/{@code deleteDocuments} 后会被 deleted-doc 标记拖累，
+     * 表现为 badge 数字小于真实已索引数。搜索结果本身不受影响（{@code SearchEngine}
+     * 同样基于 live docs），仅 badge 显示偏差。
+     */
     private int indexedCount() {
-        return (km != null) ? km.docCount() : IndexDatabase.get(this).fileMeta().countDone();
+        return IndexDatabase.get(this).fileMeta().countDone();
     }
 
     @NonNull

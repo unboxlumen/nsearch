@@ -34,7 +34,7 @@
         android:gravity="center"
         android:textAppearance="@style/TextAppearance.NSearch.Meta" />
 
-    <com.google.android.material.button.MaterialButton
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/stateAction"
         style="@style/Widget.NSearch.PillButton"
         android:layout_width="wrap_content"

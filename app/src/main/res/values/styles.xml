@@ -88,18 +88,20 @@
         <item name="chipIconVisible">false</item>
     </style>
 
-    <!-- Pill 按钮：全圆（圆角 ≥ 高度/2）、描边、无填充；用于暂停 / 取消等次级动作 -->
-    <style name="Widget.NSearch.PillButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <!-- Pill 按钮：全圆（圆角 ≥ 高度/2）、描边、无填充；用于暂停 / 取消等次级动作。
+         parent 选 Widget.AppCompat.Button.Colored（最简、不带 shapeAppearance 链）
+         而不是 Widget.MaterialComponents.Button.OutlinedButton,后者在 inflate 时
+         解析 ?attr/shapeAppearanceSmallComponent 等 attr 链,部分设备上会抛
+         "Can't find ColorStateList from drawable resource ID"。 -->
+    <style name="Widget.NSearch.PillButton" parent="Widget.AppCompat.Button.Colored">
         <item name="android:textAllCaps">false</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:textSize">@dimen/text_meta</item>
         <item name="android:letterSpacing">0.02</item>
-        <item name="cornerRadius">22dp</item>
         <item name="strokeWidth">@dimen/stroke_thin</item>
-        <item name="strokeColor">?attr/colorPrimary</item>
-        <item name="android:textColor">?attr/colorPrimary</item>
+        <item name="strokeColor">@color/brand</item>
+        <item name="android:textColor">@color/brand</item>
         <item name="rippleColor">@color/ripple_primary</item>
-        <item name="iconTint">?attr/colorPrimary</item>
         <item name="iconPadding">@dimen/space_sm</item>
         <item name="iconSize">16dp</item>
         <item name="android:insetTop">0dp</item>
